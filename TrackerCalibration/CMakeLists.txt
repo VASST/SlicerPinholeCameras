@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME CameraCalibration)
+set(MODULE_NAME TrackerCalibration)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS

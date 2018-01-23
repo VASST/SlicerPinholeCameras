@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qCameraCalibrationWidget</class>
- <widget class="qSlicerWidget" name="qCameraCalibrationWidget">
+ <class>qTrackerCalibrationWidget</class>
+ <widget class="qSlicerWidget" name="qTrackerCalibrationWidget">
   <property name="windowTitle">
    <string>Camera Calibration</string>
   </property>
