@@ -3,11 +3,11 @@ import os, vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 
 
-# TrackerCalibration
-class TrackerCalibration(ScriptedLoadableModule):
+# CameraCalibration
+class CameraCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "TrackerCalibration" # TODO make this more human readable by adding spaces
+    self.parent.title = "CameraCalibration" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Camera"]
     self.parent.dependencies = []
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
@@ -19,15 +19,15 @@ and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR0132
 """
 
 
-# TrackerCalibrationWidget
-class TrackerCalibrationWidget(ScriptedLoadableModuleWidget):
+# CameraCalibrationWidget
+class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   @staticmethod
   def get(widget, objectName):
     if widget.objectName == objectName:
       return widget
     else:
       for w in widget.children():
-        resulting_widget = TrackerCalibrationWidget.get(w, objectName)
+        resulting_widget = CameraCalibrationWidget.get(w, objectName)
         if resulting_widget:
           return resulting_widget
       return None
@@ -35,7 +35,7 @@ class TrackerCalibrationWidget(ScriptedLoadableModuleWidget):
   def __init__(self, parent):
     ScriptedLoadableModuleWidget.__init__(self, parent)
 
-    self.logic = TrackerCalibrationLogic()
+    self.logic = CameraCalibrationLogic()
 
     self.isCapturing = False
 
@@ -87,34 +87,34 @@ class TrackerCalibrationWidget(ScriptedLoadableModuleWidget):
     self.layout.addWidget(self.widget)
 
     # Tracker calibration members
-    self.inputsContainer = TrackerCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
-    self.trackerContainer = TrackerCalibrationWidget.get(self.widget, "collapsibleButton_Tracker")
-    self.intrinsicsContainer = TrackerCalibrationWidget.get(self.widget, "collapsibleButton_Intrinsics")
-    self.captureButton = TrackerCalibrationWidget.get(self.widget, "pushButton_Manual")
-    self.previewButton = TrackerCalibrationWidget.get(self.widget, "pushButton_Automatic")
-    self.imageSelector = TrackerCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
-    self.cameraSelector = TrackerCalibrationWidget.get(self.widget, "comboBox_CameraSource")
-    self.cameraTransformSelector = TrackerCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
-    self.volumeModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_VolumeNode")
-    self.cameraModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_CameraMode")
-    self.cameraContainerWidget = TrackerCalibrationWidget.get(self.widget, "widget_CameraInput")
-    self.volumeContainerWidget = TrackerCalibrationWidget.get(self.widget, "widget_VolumeInput")
-    self.manualModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_Manual")
-    self.semiAutoModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
-    self.autoModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_Automatic")
-    self.autoSettingsContainer = TrackerCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
+    self.inputsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
+    self.trackerContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Tracker")
+    self.intrinsicsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Intrinsics")
+    self.captureButton = CameraCalibrationWidget.get(self.widget, "pushButton_Manual")
+    self.previewButton = CameraCalibrationWidget.get(self.widget, "pushButton_Automatic")
+    self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
+    self.cameraSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraSource")
+    self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
+    self.volumeModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_VolumeNode")
+    self.cameraModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_CameraMode")
+    self.cameraContainerWidget = CameraCalibrationWidget.get(self.widget, "widget_CameraInput")
+    self.volumeContainerWidget = CameraCalibrationWidget.get(self.widget, "widget_VolumeInput")
+    self.manualModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Manual")
+    self.semiAutoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
+    self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
+    self.autoSettingsContainer = CameraCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
 
     # Intrinsic calibration members
-    self.capIntrinsicButton = TrackerCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
-    self.intrinsicCheckerboardButton = TrackerCalibrationWidget.get(self.widget, "radioButton_IntrinsicCheckerboard")
-    self.intrinsicCircleGridButton = TrackerCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
-    self.adaptiveThresholdButton = TrackerCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
-    self.normalizeImageButton = TrackerCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
-    self.filterQuadsButton = TrackerCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
-    self.fastCheckButton = TrackerCalibrationWidget.get(self.widget, "checkBox_FastCheck")
-    self.symmetricButton = TrackerCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
-    self.asymmetricButton = TrackerCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
-    self.clusteringButton = TrackerCalibrationWidget.get(self.widget, "radioButton_Clustering")
+    self.capIntrinsicButton = CameraCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
+    self.intrinsicCheckerboardButton = CameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCheckerboard")
+    self.intrinsicCircleGridButton = CameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
+    self.adaptiveThresholdButton = CameraCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
+    self.normalizeImageButton = CameraCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
+    self.filterQuadsButton = CameraCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
+    self.fastCheckButton = CameraCalibrationWidget.get(self.widget, "checkBox_FastCheck")
+    self.symmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
+    self.asymmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
+    self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
 
     # Hide the camera source as default is volume source
     self.cameraContainerWidget.setVisible(False)
@@ -279,8 +279,8 @@ class TrackerCalibrationWidget(ScriptedLoadableModuleWidget):
   def onPreviewButton(self):
     pass
 
-# TrackerCalibrationLogic
-class TrackerCalibrationLogic(ScriptedLoadableModuleLogic):
+# CameraCalibrationLogic
+class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
   def __init__(self):
     self.pointList = []
     self.lineList = []
@@ -292,17 +292,17 @@ class TrackerCalibrationLogic(ScriptedLoadableModuleLogic):
     return True
 
 
-# TrackerCalibrationTest
-class TrackerCalibrationTest(ScriptedLoadableModuleTest):
+# CameraCalibrationTest
+class CameraCalibrationTest(ScriptedLoadableModuleTest):
   def setUp(self):
     """ Do whatever is needed to reset the state - typically a scene clear will be enough. """
     slicer.mrmlScene.Clear(0)
 
-  def test_TrackerCalibration1(self):
+  def test_CameraCalibration1(self):
     self.delayDisplay("Starting the test")
     self.delayDisplay('Test passed!')
 
   def runTest(self):
     """ Run as few or as many tests as needed here. """
     self.setUp()
-    self.test_TrackerCalibration1()
+    self.test_CameraCalibration1()

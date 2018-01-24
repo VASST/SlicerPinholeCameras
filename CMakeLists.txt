@@ -22,7 +22,7 @@ find_package(SlicerOpenCV REQUIRED)
 
 #-----------------------------------------------------------------------------
 # Extension modules
-add_subdirectory(TrackerCalibration)
+add_subdirectory(CameraCalibration)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
