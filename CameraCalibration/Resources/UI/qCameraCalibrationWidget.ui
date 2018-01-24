@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>qCameraCalibrationWidget</class>
  <widget class="qSlicerWidget" name="qCameraCalibrationWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>398</width>
+    <height>713</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Camera Calibration</string>
   </property>
@@ -694,6 +702,16 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="pushButton_SemiAuto">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Preview</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="pushButton_Automatic">
            <property name="enabled">
             <bool>false</bool>
@@ -746,13 +764,13 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_InputMode"/>
+  <buttongroup name="buttonGroup_CircleGridMethod"/>
   <buttongroup name="buttonGroup_ProcessMode"/>
+  <buttongroup name="buttonGroup_InputMode"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_CircleGridMethod"/>
  </buttongroups>
 </ui>
