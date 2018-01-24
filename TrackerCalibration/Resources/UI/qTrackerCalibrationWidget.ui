@@ -6,7 +6,7 @@
    <string>Camera Calibration</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="0">
+   <item row="4" column="0">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -18,6 +18,258 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="1" column="0">
+    <widget class="ctkCollapsibleButton" name="collapsibleButton_Intrinsics">
+     <property name="text">
+      <string>Intrinsics</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_IntrinsicMethod">
+        <property name="text">
+         <string>Method:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QSpinBox" name="spinBox_Columns">
+        <property name="value">
+         <number>8</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spinBox_Rows">
+        <property name="value">
+         <number>6</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="label_Columns">
+        <property name="text">
+         <string>Columns:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_Flags">
+        <property name="text">
+         <string>Flags:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_Rows">
+        <property name="text">
+         <string>Rows:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="3">
+       <widget class="QWidget" name="widget_IntrinsicMethodContainer" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QRadioButton" name="radioButton_IntrinsicCheckerboard">
+           <property name="text">
+            <string>Checkerboard</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_IntrinsicMethod</string>
+           </attribute>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_IntrinsicCircleGrid">
+           <property name="text">
+            <string>Grid of circles</string>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_IntrinsicMethod</string>
+           </attribute>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="3">
+       <widget class="QWidget" name="widget_FlagsContainer" native="true">
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="checkBox_AdaptiveThreshold">
+           <property name="toolTip">
+            <string>Use adaptive thresholding to convert the image to black and white, rather than a fixed threshold level (computed from the average image brightness).</string>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_ADAPTIVE_THRESH</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_NormalizeImage">
+           <property name="toolTip">
+            <string>Normalize the image gamma with equalizeHist() before applying fixed or adaptive thresholding.</string>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_NORMALIZE_IMAGE </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_FilterQuads">
+           <property name="toolTip">
+            <string>Use additional criteria (like contour area, perimeter, square-like shape) to filter out false quads extracted at the contour retrieval stage.</string>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_FILTER_QUADS </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_FastCheck">
+           <property name="toolTip">
+            <string>Run a fast check on the image that looks for chessboard corners, and shortcut the call if none is found. This can drastically speed up the call in the degenerate condition when no chessboard is observed.</string>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_FAST_CHECK </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_SymmetricGrid">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_SYMMETRIC_GRID </string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_CircleGridMethod</string>
+           </attribute>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_AsymmetricGrid">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_ASYMMETRIC_GRID </string>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_CircleGridMethod</string>
+           </attribute>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_Clustering">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>uses a special algorithm for grid detection. It is more robust to perspective distortions but much more sensitive to background clutter.</string>
+           </property>
+           <property name="text">
+            <string>CALIB_CB_CLUSTERING </string>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_CircleGridMethod</string>
+           </attribute>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="4">
+       <widget class="QWidget" name="widget_CapContainer" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>40</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>135</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_CaptureIntrinsic">
+           <property name="text">
+            <string>Capture</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </item>
    <item row="0" column="0">
     <widget class="ctkCollapsibleButton" name="collapsibleButton_Inputs">
@@ -196,14 +448,17 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="ctkCollapsibleButton" name="collapsibleButton_Settings">
+   <item row="3" column="0">
+    <widget class="ctkCollapsibleButton" name="collapsibleButton_Tracker">
      <property name="text">
-      <string>Settings</string>
+      <string>Tracker (Point-to-Line)</string>
      </property>
      <layout class="QFormLayout" name="formLayout_5">
       <item row="0" column="0">
        <widget class="QLabel" name="label_ProcessMode">
+        <property name="toolTip">
+         <string>Which method to use to identify the image fiducial</string>
+        </property>
         <property name="text">
          <string>Method:</string>
         </property>
@@ -227,7 +482,7 @@
          <item>
           <widget class="QRadioButton" name="radioButton_Manual">
            <property name="text">
-            <string>Manual (Fiducial)</string>
+            <string>Manual</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -238,9 +493,19 @@
           </widget>
          </item>
          <item>
+          <widget class="QRadioButton" name="radioButton_SemiAuto">
+           <property name="text">
+            <string>Semi-Auto</string>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_ProcessMode</string>
+           </attribute>
+          </widget>
+         </item>
+         <item>
           <widget class="QRadioButton" name="radioButton_Automatic">
            <property name="text">
-            <string>Automatic (Hough transform)</string>
+            <string>Automatic</string>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">buttonGroup_ProcessMode</string>
@@ -390,18 +655,9 @@
         </layout>
        </widget>
       </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="ctkCollapsibleButton" name="collapsibleButton_Actions">
-     <property name="text">
-      <string>Actions</string>
-     </property>
-     <layout class="QFormLayout" name="formLayout_4">
-      <item row="0" column="0" colspan="2">
-       <widget class="QWidget" name="widget_containerAction" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item row="2" column="0" colspan="2">
+       <widget class="QWidget" name="widget" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -488,58 +744,15 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>qCameraCalibrationWidget</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>comboBox_ImageSelector</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>389</x>
-     <y>191</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>236</x>
-     <y>88</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>qCameraCalibrationWidget</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>comboBox_CameraSource</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>390</x>
-     <y>274</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>176</x>
-     <y>110</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>qCameraCalibrationWidget</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>comboBox_CameraTransform</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>387</x>
-     <y>85</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>287</x>
-     <y>144</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_InputMode"/>
   <buttongroup name="buttonGroup_ProcessMode"/>
+  <buttongroup name="buttonGroup_IntrinsicMethod">
+   <property name="exclusive">
+    <bool>true</bool>
+   </property>
+  </buttongroup>
+  <buttongroup name="buttonGroup_CircleGridMethod"/>
  </buttongroups>
 </ui>

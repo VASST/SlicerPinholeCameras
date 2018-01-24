@@ -3,11 +3,11 @@ import os, vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 
 
-# CameraCalibration
-class CameraCalibration(ScriptedLoadableModule):
+# TrackerCalibration
+class TrackerCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "CameraCalibration" # TODO make this more human readable by adding spaces
+    self.parent.title = "TrackerCalibration" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Camera"]
     self.parent.dependencies = []
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
@@ -19,15 +19,15 @@ and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR0132
 """
 
 
-# CameraCalibrationWidget
-class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
+# TrackerCalibrationWidget
+class TrackerCalibrationWidget(ScriptedLoadableModuleWidget):
   @staticmethod
   def get(widget, objectName):
     if widget.objectName == objectName:
       return widget
     else:
       for w in widget.children():
-        resulting_widget = CameraCalibrationWidget.get(w, objectName)
+        resulting_widget = TrackerCalibrationWidget.get(w, objectName)
         if resulting_widget:
           return resulting_widget
       return None
@@ -35,7 +35,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def __init__(self, parent):
     ScriptedLoadableModuleWidget.__init__(self, parent)
 
-    self.logic = CameraCalibrationLogic()
+    self.logic = TrackerCalibrationLogic()
 
     self.isCapturing = False
 
@@ -44,8 +44,11 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.widget = None
 
     self.inputsContainer = None
-    self.settingsContainer = None
+    self.trackerContainer = None
+    self.intrinsicsContainer = None
     self.autoSettingsContainer = None
+
+    # Tracker
     self.captureButton = None
     self.previewButton = None
     self.imageSelector = None
@@ -57,6 +60,19 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.volumeContainerWidget = None
     self.manualModeButton = None
     self.autoModeButton = None
+    self.semiAutoModeButton = None
+
+    # Intrinsics
+    self.capIntrinsicButton = None
+    self.intrinsicCheckerboardButton = None
+    self.intrinsicCircleGridButton = None
+    self.adaptiveThresholdButton = None
+    self.normalizeImageButton = None
+    self.filterQuadsButton = None
+    self.fastCheckButton = None
+    self.symmetricButton = None
+    self.asymmetricButton = None
+    self.clusteringButton = None
 
     self.sceneObserverTag = None
 
@@ -70,37 +86,42 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.widget = slicer.util.loadUI(path)
     self.layout.addWidget(self.widget)
 
-    # Convenience storage of UI members
-    self.inputsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
-    self.settingsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Settings")
-    self.captureButton = CameraCalibrationWidget.get(self.widget, "pushButton_Manual")
-    self.previewButton = CameraCalibrationWidget.get(self.widget, "pushButton_Automatic")
-    self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
-    self.cameraSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraSource")
-    self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
-    self.volumeModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_VolumeNode")
-    self.cameraModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_CameraMode")
-    self.cameraContainerWidget = CameraCalibrationWidget.get(self.widget, "widget_CameraInput")
-    self.volumeContainerWidget = CameraCalibrationWidget.get(self.widget, "widget_VolumeInput")
-    self.manualModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Manual")
-    self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
+    # Tracker calibration members
+    self.inputsContainer = TrackerCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
+    self.trackerContainer = TrackerCalibrationWidget.get(self.widget, "collapsibleButton_Tracker")
+    self.intrinsicsContainer = TrackerCalibrationWidget.get(self.widget, "collapsibleButton_Intrinsics")
+    self.captureButton = TrackerCalibrationWidget.get(self.widget, "pushButton_Manual")
+    self.previewButton = TrackerCalibrationWidget.get(self.widget, "pushButton_Automatic")
+    self.imageSelector = TrackerCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
+    self.cameraSelector = TrackerCalibrationWidget.get(self.widget, "comboBox_CameraSource")
+    self.cameraTransformSelector = TrackerCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
+    self.volumeModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_VolumeNode")
+    self.cameraModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_CameraMode")
+    self.cameraContainerWidget = TrackerCalibrationWidget.get(self.widget, "widget_CameraInput")
+    self.volumeContainerWidget = TrackerCalibrationWidget.get(self.widget, "widget_VolumeInput")
+    self.manualModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_Manual")
+    self.semiAutoModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
+    self.autoModeButton = TrackerCalibrationWidget.get(self.widget, "radioButton_Automatic")
+    self.autoSettingsContainer = TrackerCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
 
-    self.autoSettingsContainer = CameraCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
-
-    #int
-    #method, double cv.HOUGH_GRADIENT
-    #dp, double
-    #minDist, double
-    #param1 = 100, double
-    #param2 = 100, int
-    #minRadius = 0, int
-    #maxRadius = 0, int
+    # Intrinsic calibration members
+    self.capIntrinsicButton = TrackerCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
+    self.intrinsicCheckerboardButton = TrackerCalibrationWidget.get(self.widget, "radioButton_IntrinsicCheckerboard")
+    self.intrinsicCircleGridButton = TrackerCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
+    self.adaptiveThresholdButton = TrackerCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
+    self.normalizeImageButton = TrackerCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
+    self.filterQuadsButton = TrackerCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
+    self.fastCheckButton = TrackerCalibrationWidget.get(self.widget, "checkBox_FastCheck")
+    self.symmetricButton = TrackerCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
+    self.asymmetricButton = TrackerCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
+    self.clusteringButton = TrackerCalibrationWidget.get(self.widget, "radioButton_Clustering")
 
     # Hide the camera source as default is volume source
     self.cameraContainerWidget.setVisible(False)
 
-    # Disable settings as image processing isn't active yet
-    self.settingsContainer.setEnabled(False)
+    # Disable capture as image processing isn't active yet
+    self.trackerContainer.setEnabled(False)
+    self.intrinsicsContainer.setEnabled(False)
 
     # UI file method does not do mrml scene connections, do them manually
     self.imageSelector.setMRMLScene(slicer.mrmlScene)
@@ -117,6 +138,10 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.cameraModeButton.connect('clicked(bool)', self.onInputModeChanged)
     self.manualModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
+
+    self.capIntrinsicButton.connect('clicked(bool)', self.onIntrinsicCapture)
+    self.intrinsicCheckerboardButton.connect('clicked(bool)', self.onIntrinsicModeChanged)
+    self.intrinsicCircleGridButton.connect('clicked(bool)', self.onIntrinsicModeChanged)
 
     # Adding an observer to scene to listen for mrml node
     self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
@@ -139,7 +164,14 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.manualModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
 
+    self.capIntrinsicButton.disconnect('clicked(bool)', self.onIntrinsicCapture)
+    self.intrinsicCheckerboardButton.disconnect('clicked(bool)', self.onIntrinsicModeChanged)
+    self.intrinsicCircleGridButton.disconnect('clicked(bool)', self.onIntrinsicModeChanged)
+
     slicer.mrmlScene.RemoveObserver(self.sceneObserverTag)
+
+  def onIntrinsicCapture(self):
+    pass
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -149,9 +181,30 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onCameraSelected(self):
     self.onSelect()
 
+  def onIntrinsicModeChanged(self):
+    if self.intrinsicCheckerboardButton.checked:
+      self.adaptiveThresholdButton.enabled = True
+      self.normalizeImageButton.enabled = True
+      self.filterQuadsButton.enabled = True
+      self.fastCheckButton.enabled = True
+      self.symmetricButton.enabled = False
+      self.asymmetricButton.enabled = False
+      self.clusteringButton.enabled = False
+    else:
+      self.adaptiveThresholdButton.enabled = False
+      self.normalizeImageButton.enabled = False
+      self.filterQuadsButton.enabled = False
+      self.fastCheckButton.enabled = False
+      self.symmetricButton.enabled = True
+      self.asymmetricButton.enabled = True
+      self.clusteringButton.enabled = True
+
   def onSelect(self):
+    self.capIntrinsicButton.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
     self.captureButton.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
     self.previewButton.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
+    self.trackerContainer.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
+    self.intrinsicsContainer.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
 
   def onInputModeChanged(self):
     if self.volumeModeButton.checked:
@@ -166,9 +219,13 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.captureButton.setVisible(True)
       self.previewButton.setVisible(False)
       self.autoSettingsContainer.setEnabled(False)
-    else:
+    elif self.semiAutoModeButton.checked:
       self.captureButton.setVisible(False)
       self.previewButton.setVisible(True)
+      self.autoSettingsContainer.setEnabled(True)
+    else:
+      self.captureButton.setVisible(True)
+      self.previewButton.setVisible(False)
       self.autoSettingsContainer.setEnabled(True)
 
   def onCaptureButton(self):
@@ -176,7 +233,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # Cancel button hit
       slicer.modules.markups.logic().StopPlaceMode()
       self.inputsContainer.setEnabled(True)
-      self.settingsContainer.setEnabled(True)
+      self.trackerContainer.setEnabled(True)
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetForegroundVolumeID(self.centerFiducialSelectionNode.GetID())
       return()
 
@@ -197,7 +254,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Disable input changing while capture is active
     self.inputsContainer.setEnabled(False)
-    self.settingsContainer.setEnabled(False)
+    self.trackerContainer.setEnabled(False)
 
     self.isCapturing = True
     self.captureButton.setText('Cancel')
@@ -212,7 +269,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       # Re-enable
       self.inputsContainer.setEnabled(True)
-      self.settingsContainer.setEnabled(True)
+      self.trackerContainer.setEnabled(True)
 
       # TODO : store point and line pair
 
@@ -222,8 +279,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onPreviewButton(self):
     pass
 
-# CameraCalibrationLogic
-class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
+# TrackerCalibrationLogic
+class TrackerCalibrationLogic(ScriptedLoadableModuleLogic):
   def __init__(self):
     self.pointList = []
     self.lineList = []
@@ -235,17 +292,17 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     return True
 
 
-# CameraCalibrationTest
-class CameraCalibrationTest(ScriptedLoadableModuleTest):
+# TrackerCalibrationTest
+class TrackerCalibrationTest(ScriptedLoadableModuleTest):
   def setUp(self):
     """ Do whatever is needed to reset the state - typically a scene clear will be enough. """
     slicer.mrmlScene.Clear(0)
 
-  def test_CameraCalibration1(self):
+  def test_TrackerCalibration1(self):
     self.delayDisplay("Starting the test")
     self.delayDisplay('Test passed!')
 
   def runTest(self):
     """ Run as few or as many tests as needed here. """
     self.setUp()
-    self.test_CameraCalibration1()
+    self.test_TrackerCalibration1()
