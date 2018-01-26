@@ -49,19 +49,17 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.intrinsicsContainer = None
     self.autoSettingsContainer = None
 
+    # Inputs
+    self.imageSelector = None
+    self.cameraTransformSelector = None
+
     # Tracker
     self.manualButton = None
     self.semiAutoButton = None
-    self.imageSelector = None
-    self.cameraSelector = None
-    self.cameraTransformSelector = None
-    self.volumeModeButton = None
-    self.cameraModeButton = None
-    self.cameraContainerWidget = None
-    self.volumeContainerWidget = None
     self.manualModeButton = None
     self.autoModeButton = None
     self.semiAutoModeButton = None
+    self.autoButton = None
 
     # Intrinsics
     self.capIntrinsicButton = None
@@ -74,6 +72,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.symmetricButton = None
     self.asymmetricButton = None
     self.clusteringButton = None
+
+    self.columnsSpinBox = None
+    self.rowsSpinBox = None
 
     # OpenCV vars
     self.objPattern = None
@@ -101,12 +102,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.semiAutoButton = CameraCalibrationWidget.get(self.widget, "pushButton_SemiAuto")
     self.autoButton = CameraCalibrationWidget.get(self.widget, "pushButton_Automatic")
     self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
-    self.cameraSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraSource")
     self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
-    self.volumeModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_VolumeNode")
-    self.cameraModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_CameraMode")
-    self.cameraContainerWidget = CameraCalibrationWidget.get(self.widget, "widget_CameraInput")
-    self.volumeContainerWidget = CameraCalibrationWidget.get(self.widget, "widget_VolumeInput")
     self.manualModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Manual")
     self.semiAutoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
     self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
@@ -126,16 +122,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.asymmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
     self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
 
-    # Hide the camera source as default is volume source
-    self.cameraContainerWidget.setVisible(False)
-
     # Disable capture as image processing isn't active yet
     self.trackerContainer.setEnabled(False)
     self.intrinsicsContainer.setEnabled(False)
 
     # UI file method does not do mrml scene connections, do them manually
     self.imageSelector.setMRMLScene(slicer.mrmlScene)
-    self.cameraSelector.setMRMLScene(slicer.mrmlScene)
     self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
 
     # Connections
@@ -149,10 +141,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.semiAutoButton.connect('clicked(bool)', self.onSemiAutoButton)
     self.autoButton.connect('clicked(bool)', self.onAutoButton)
     self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
-    self.cameraSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.volumeModeButton.connect('clicked(bool)', self.onInputModeChanged)
-    self.cameraModeButton.connect('clicked(bool)', self.onInputModeChanged)
+    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.manualModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
 
@@ -172,7 +161,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
 
     # Initialize pattern, etc..
-    self.calculateObjectPattern()
+    self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value)
 
     # Refresh Apply button state
     self.onSelect()
@@ -188,10 +177,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.semiAutoButton.disconnect('clicked(bool)', self.onSemiAutoButton)
     self.autoButton.disconnect('clicked(bool)', self.onAutoButton)
     self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
-    self.cameraSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.volumeModeButton.disconnect('clicked(bool)', self.onInputModeChanged)
-    self.cameraModeButton.disconnect('clicked(bool)', self.onInputModeChanged)
+    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.manualModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
 
@@ -219,31 +205,30 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   def onImageSelected(self):
     # Set red slice to the copy node
-    slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetForegroundVolumeID(self.imageSelector.currentNode().GetID())
+    if self.imageSelector.currentNode() is not None:
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
     self.onSelect()
 
   def onFlagChanged(self):
     flags = 0
-    if self.adaptiveThresholdButton.checked:
-      flags = flags + cv2.CALIB_CB_ADAPTIVE_THRESH
-    if self.normalizeImageButton.checked:
-      flags = flags + cv2.CALIB_CB_NORMALIZE_IMAGE
-    if self.filterQuadsButton.checked:
-      flags = flags + cv2.CALIB_CB_FILTER_QUADS
-    if self.fastCheckButton.checked:
-      flags = flags + cv2.CALIB_CB_FAST_CHECK
-
-    if self.symmetricButton.checked:
-      flags = flags + cv2.CALIB_CB_SYMMETRIC_GRID
-    if self.asymmetricButton.checked:
-      flags = flags + cv2.CALIB_CB_ASYMMETRIC_GRID
-    if self.clusteringButton.checked:
-      flags = flags + cv2.CALIB_CB_CLUSTERING
+    if self.intrinsicCheckerboardButton.checked:
+      if self.adaptiveThresholdButton.checked:
+        flags = flags + cv2.CALIB_CB_ADAPTIVE_THRESH
+      if self.normalizeImageButton.checked:
+        flags = flags + cv2.CALIB_CB_NORMALIZE_IMAGE
+      if self.filterQuadsButton.checked:
+        flags = flags + cv2.CALIB_CB_FILTER_QUADS
+      if self.fastCheckButton.checked:
+        flags = flags + cv2.CALIB_CB_FAST_CHECK
+    else:
+      if self.symmetricButton.checked:
+        flags = flags + cv2.CALIB_CB_SYMMETRIC_GRID
+      if self.asymmetricButton.checked:
+        flags = flags + cv2.CALIB_CB_ASYMMETRIC_GRID
+      if self.clusteringButton.checked:
+        flags = flags + cv2.CALIB_CB_CLUSTERING
 
     self.logic.setFlags(flags)
-
-  def onCameraSelected(self):
-    self.onSelect()
 
   def onPatternChanged(self, value):
     self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value)
@@ -267,19 +252,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.clusteringButton.enabled = True
 
   def onSelect(self):
-    self.capIntrinsicButton.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
-    self.manualButton.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
-    self.semiAutoButton.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
-    self.trackerContainer.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
-    self.intrinsicsContainer.enabled = (self.imageSelector.currentNode() or self.cameraSelector.currentNode()) and self.cameraTransformSelector.currentNode()
+    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None
+    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None
 
-  def onInputModeChanged(self):
-    if self.volumeModeButton.checked:
-      self.cameraContainerWidget.setVisible(False)
-      self.volumeContainerWidget.setVisible(True)
-    else:
-      self.cameraContainerWidget.setVisible(True)
-      self.volumeContainerWidget.setVisible(False)
+    self.manualButton.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode()
+    self.semiAutoButton.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode()
+    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode()
 
   def onProcessingModeChanged(self):
     if self.manualModeButton.checked:
@@ -301,7 +279,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       slicer.modules.markups.logic().StopPlaceMode()
       self.inputsContainer.setEnabled(True)
       self.trackerContainer.setEnabled(True)
-      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetForegroundVolumeID(self.centerFiducialSelectionNode.GetID())
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.centerFiducialSelectionNode.GetID())
       self.manualButton.setText('Capture')
       return()
 
@@ -311,11 +289,11 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       slicer.mrmlScene.RemoveNode(self.copyNode)
       self.copyNode = None
 
-    self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetForegroundVolumeID())
+    self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
     self.copyNode = slicer.mrmlScene.CopyNode(self.centerFiducialSelectionNode)
 
     # Set red slice to the copy node
-    slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetForegroundVolumeID(self.copyNode.GetID())
+    slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.copyNode.GetID())
 
     # Initiate fiducial selection
     slicer.modules.markups.logic().StartPlaceMode(False)
@@ -342,7 +320,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # TODO : store point and line pair
 
       # Resume playback
-      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetForegroundVolumeID(self.centerFiducialSelectionNode.GetID())
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.centerFiducialSelectionNode.GetID())
 
   def onSemiAutoButton(self):
     pass
@@ -385,10 +363,11 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def findCheckerboard(self, image):
     self.imageSize = image.shape[::-1]
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Find the chess board corners
-    ret, corners = cv2.findChessboardCorners(gray, (self.objPatternRows, self.objPatternColumns), None)
+    ret, corners = cv2.findChessboardCorners(image, (self.objPatternRows, self.objPatternColumns), self.flags)
+    print corners
 
     # If found, add object points, image points (after refining them)
     if ret == True:
@@ -397,7 +376,10 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def findCircleGrid(self, image):
     self.imageSize = image.shape[::-1]
-    ret, centers = cv2.findCirclesGrid(image, (self.objPatternRows, self.objPatternColumns), )
+    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    ret, centers = cv2.findCirclesGrid(image, (self.objPatternRows, self.objPatternColumns), self.flags)
+    print centers
 
   def calculateIntrinsics(self):
     if len(self.intrinsicImagePoints) > 0:

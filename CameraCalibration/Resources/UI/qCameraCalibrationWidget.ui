@@ -286,153 +286,44 @@
      </property>
      <layout class="QFormLayout" name="formLayout">
       <item row="0" column="0">
-       <widget class="QLabel" name="label_InputSource">
+       <widget class="QLabel" name="label_VolumeInput">
         <property name="text">
-         <string>Input source:</string>
+         <string>Image source:</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QWidget" name="widget_Modes" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QRadioButton" name="radioButton_VolumeNode">
-           <property name="text">
-            <string>Volume</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_InputMode</string>
-           </attribute>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="radioButton_CameraMode">
-           <property name="text">
-            <string>Camera</string>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_InputMode</string>
-           </attribute>
-          </widget>
-         </item>
-        </layout>
+       <widget class="qMRMLNodeComboBox" name="comboBox_ImageSelector">
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLScalarVolumeNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="addEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="removeEnabled">
+         <bool>false</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="selectNodeUponCreation">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QWidget" name="widget_VolumeInput" native="true">
-        <layout class="QFormLayout" name="formLayout_2">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_VolumeInput">
-           <property name="text">
-            <string>Image source:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="qMRMLNodeComboBox" name="comboBox_ImageSelector">
-           <property name="nodeTypes">
-            <stringlist>
-             <string>vtkMRMLScalarVolumeNode</string>
-            </stringlist>
-           </property>
-           <property name="noneEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="addEnabled">
-            <bool>false</bool>
-           </property>
-           <property name="removeEnabled">
-            <bool>false</bool>
-           </property>
-           <property name="renameEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="selectNodeUponCreation">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="3" column="0" colspan="2">
-       <widget class="QWidget" name="widget_CameraInput" native="true">
-        <layout class="QFormLayout" name="formLayout_3">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_CameraSource">
-           <property name="text">
-            <string>Camera:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="qMRMLNodeComboBox" name="comboBox_CameraSource">
-           <property name="nodeTypes">
-            <stringlist>
-             <string>vtkMRMLCameraCaptureNode</string>
-            </stringlist>
-           </property>
-           <property name="noneEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="addEnabled">
-            <bool>false</bool>
-           </property>
-           <property name="removeEnabled">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="5" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="label_CameraTransform">
         <property name="text">
          <string>Camera transform:</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="2" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBox_CameraTransform">
         <property name="nodeTypes">
          <stringlist>
@@ -764,7 +655,6 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_CircleGridMethod"/>
   <buttongroup name="buttonGroup_ProcessMode"/>
   <buttongroup name="buttonGroup_InputMode"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
@@ -772,5 +662,6 @@
     <bool>true</bool>
    </property>
   </buttongroup>
+  <buttongroup name="buttonGroup_CircleGridMethod"/>
  </buttongroups>
 </ui>
