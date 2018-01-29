@@ -196,7 +196,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     rows, cols, _ = vtk_im.GetDimensions()
     sc = vtk_im.GetPointData().GetScalars()
     im = vtk_to_numpy(sc)
-    im = im.reshape(rows, cols, -1)
+    im = im.reshape(cols, rows, -1)
 
     if self.intrinsicCheckerboardButton.checked:
       self.logic.findCheckerboard(im)
@@ -331,8 +331,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 # CameraCalibrationLogic
 class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
   def __init__(self):
-    self.intrinsicObjectPoints = []
-    self.intrinsicImagePoints = []
+    self.objectPoints = []
+    self.imagePoints = []
 
     self.flags = None
     self.imageSize = (0,0)
@@ -355,8 +355,8 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     self.subPixRadius = radius
 
   def resetIntrinsic(self):
-    self.intrinsicImagePoints = []
-    self.intrinsicImagePoints = []
+    self.objectPoints = []
+    self.imagePoints = []
 
   def setFlags(self, flags):
     self.flags = flags
@@ -371,19 +371,23 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
     # If found, add object points, image points (after refining them)
     if ret == True:
-      self.intrinsicObjectPoints.append(self.objPattern)
-      self.intrinsicImagePoints.append(cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria))
+      self.objectPoints.append(self.objPattern)
+      self.imagePoints.append(cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria))
 
   def findCircleGrid(self, image):
     self.imageSize = image.shape[::-1]
-    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    try:
+      gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    except:
+      gray = image
 
-    ret, centers = cv2.findCirclesGrid(image, (self.objPatternRows, self.objPatternColumns), self.flags)
+    ret, centers = cv2.findCirclesGrid(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
+    print ret
     print centers
 
-  def calculateIntrinsics(self):
-    if len(self.intrinsicImagePoints) > 0:
-      ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.intrinsicObjectPoints, self.intrinsicImagePoints, self.imageSize, None, None)
+  def calibrateCamera(self):
+    if len(self.imagePoints) > 0:
+      ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
 
 # CameraCalibrationTest
 class CameraCalibrationTest(ScriptedLoadableModuleTest):
