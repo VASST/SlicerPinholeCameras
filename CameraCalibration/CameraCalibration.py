@@ -363,16 +363,19 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def findCheckerboard(self, image):
     self.imageSize = image.shape[::-1]
-    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    try:
+      gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    except:
+      gray = image
 
     # Find the chess board corners
-    ret, corners = cv2.findChessboardCorners(image, (self.objPatternRows, self.objPatternColumns), self.flags)
-    print corners
+    ret, corners = cv2.findChessboardCorners(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
 
     # If found, add object points, image points (after refining them)
     if ret == True:
       self.objectPoints.append(self.objPattern)
       self.imagePoints.append(cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria))
+      self.calibrateCamera()
 
   def findCircleGrid(self, image):
     self.imageSize = image.shape[::-1]
@@ -382,12 +385,20 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
       gray = image
 
     ret, centers = cv2.findCirclesGrid(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
-    print ret
-    print centers
+
+    if ret == True:
+      self.objectPoints.append(self.objPattern)
+      self.imagePoints.append(centers)
+      self.calibrateCamera()
 
   def calibrateCamera(self):
     if len(self.imagePoints) > 0:
       ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
+      print 'ret: ' + str(ret)
+      print 'mtx: ' + str(mtx)
+      print 'dist: ' + str(dist)
+      print 'rvecs: ' + str(rvecs)
+      print 'tvecs: ' + str(tvecs)
 
 # CameraCalibrationTest
 class CameraCalibrationTest(ScriptedLoadableModuleTest):
