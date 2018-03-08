@@ -10,7 +10,7 @@ set(EXTENSION_CONTRIBUTORS "Adam Rankin (Robarts Research Institute), Elvis Chen
 set(EXTENSION_DESCRIPTION "This extension contains modules for interacting with cameras (calibration, capture, etc...)")
 set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/SlicerCamera.png")
 set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/SlicerCamera/Screenshots/1.png")
-set(EXTENSION_DEPENDS "SlicerOpenCV") # Specified as a space separated string, a list or 'NA' if any
+set(EXTENSION_DEPENDS "SlicerOpenCV;SlicerVASST") # Specified as a space separated string, a list or 'NA' if any
 SET(EXTENSION_TAGS "NA") # Specified as a space separated string, a list or 'NA' if any
 
 #-----------------------------------------------------------------------------
@@ -19,6 +19,10 @@ find_package(Slicer REQUIRED)
 include(${Slicer_USE_FILE})
 
 find_package(SlicerOpenCV REQUIRED)
+mark_as_superbuild(SlicerOpenCV_DIR)
+
+find_package(SlicerVASST REQUIRED)
+mark_as_superbuild(SlicerVASST_DIR)
 
 #-----------------------------------------------------------------------------
 # Extension modules
