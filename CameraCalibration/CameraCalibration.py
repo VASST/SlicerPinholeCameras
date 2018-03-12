@@ -8,16 +8,13 @@ from slicer.ScriptedLoadableModule import *
 class CameraCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "CameraCalibration" # TODO make this more human readable by adding spaces
+    self.parent.title = "Calibration"
     self.parent.categories = ["Camera"]
     self.parent.dependencies = []
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
-    self.parent.helpText = """Perform camera calibration against an external tracker."""
+    self.parent.helpText = """Perform intrinsic and extrinsic camera calibration against an external tracker."""
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
-    self.parent.acknowledgementText = """
-This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
-"""
+    self.parent.acknowledgementText = """This file was originally developed by Adam Rankin, Robarts Research Institute and was partially funded by NSERC."""
 
 
 # CameraCalibrationWidget
@@ -72,6 +69,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.symmetricButton = None
     self.asymmetricButton = None
     self.clusteringButton = None
+    self.labelResult = None
 
     self.columnsSpinBox = None
     self.rowsSpinBox = None
@@ -121,6 +119,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.symmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
     self.asymmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
     self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
+    self.labelResult = CameraCalibrationWidget.get(self.widget, "label_ResultValue")
 
     # Disable capture as image processing isn't active yet
     self.trackerContainer.setEnabled(False)
@@ -199,9 +198,14 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     im = im.reshape(cols, rows, -1)
 
     if self.intrinsicCheckerboardButton.checked:
-      self.logic.findCheckerboard(im)
+      ret = self.logic.findCheckerboard(im)
     else:
-      self.logic.findCircleGrid(im)
+      ret = self.logic.findCircleGrid(im)
+
+    if ret:
+      self.labelResult.text = "Success (" + self.logic.count() + ")"
+    else:
+      self.labelResult.text = "Failure."
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -377,6 +381,8 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
       self.imagePoints.append(cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria))
       self.calibrateCamera()
 
+    return ret
+
   def findCircleGrid(self, image):
     self.imageSize = image.shape[::-1]
     try:
@@ -391,6 +397,8 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
       self.imagePoints.append(centers)
       self.calibrateCamera()
 
+    return ret
+
   def calibrateCamera(self):
     if len(self.imagePoints) > 0:
       ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
@@ -399,6 +407,9 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
       print 'dist: ' + str(dist)
       print 'rvecs: ' + str(rvecs)
       print 'tvecs: ' + str(tvecs)
+
+  def count(self):
+    return len(self.imagePoints)
 
 # CameraCalibrationTest
 class CameraCalibrationTest(ScriptedLoadableModuleTest):
