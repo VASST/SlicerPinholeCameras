@@ -108,10 +108,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Intrinsic calibration members
     self.capIntrinsicButton = CameraCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
+    self.resetButton = CameraCalibrationWidget.get(self.widget, "pushButton_Reset")
     self.intrinsicCheckerboardButton = CameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCheckerboard")
     self.intrinsicCircleGridButton = CameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
     self.columnsSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_Columns")
     self.rowsSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_Rows")
+    self.squareSizeEdit = CameraCalibrationWidget.get(self.widget, "lineEdit_SquareSize")
     self.adaptiveThresholdButton = CameraCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
     self.normalizeImageButton = CameraCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
     self.filterQuadsButton = CameraCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
@@ -120,6 +122,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.asymmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
     self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
     self.labelResult = CameraCalibrationWidget.get(self.widget, "label_ResultValue")
+    self.cameraMatrixTable = CameraCalibrationWidget.get(self.widget, "tableWidget_CameraMatrix")
+    self.distCoeffsTable = CameraCalibrationWidget.get(self.widget, "tableWidget_DistCoeffs")
 
     # Disable capture as image processing isn't active yet
     self.trackerContainer.setEnabled(False)
@@ -131,6 +135,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Connections
     self.capIntrinsicButton.connect('clicked(bool)', self.onIntrinsicCapture)
+    self.resetButton.connect('clicked(bool)', self.onReset)
     self.intrinsicCheckerboardButton.connect('clicked(bool)', self.onIntrinsicModeChanged)
     self.intrinsicCircleGridButton.connect('clicked(bool)', self.onIntrinsicModeChanged)
     self.rowsSpinBox.connect('valueChanged(int)', self.onPatternChanged)
@@ -160,7 +165,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
 
     # Initialize pattern, etc..
-    self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value)
+    self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, int(self.squareSizeEdit.text))
 
     # Refresh Apply button state
     self.onSelect()
@@ -203,9 +208,25 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       ret = self.logic.findCircleGrid(im)
 
     if ret:
-      self.labelResult.text = "Success (" + self.logic.count() + ")"
+      self.labelResult.text = "Success (" + str(self.logic.count()) + ")"
+      done, error, mtx, dist = self.logic.calibrateCamera()
+      if done:
+        for i in range(0,3):
+          for j in range(0,3):
+            self.cameraMatrixTable.item(i,j).setText(mtx[i][j])
+        for i in range(0, len(dist[0])):
+            self.distCoeffsTable.item(0,i).setText(dist[0][i])
     else:
       self.labelResult.text = "Failure."
+
+  def onReset(self):
+    self.logic.resetIntrinsic()
+    self.labelResult.text = "Reset."
+    for i in range(0, 3):
+      for j in range(0, 3):
+        self.cameraMatrixTable.item(i, j).setText(0.0)
+    for i in range(0, self.distCoeffsTable.columnCount):
+      self.distCoeffsTable.item(0, i).setText(0.0)
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -338,22 +359,24 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     self.objectPoints = []
     self.imagePoints = []
 
-    self.flags = None
+    self.flags = 0
     self.imageSize = (0,0)
     self.objPatternRows = 0
     self.objPatternColumns = 0
-    self.subPixRadius = 11
+    self.subPixRadius = 5
     self.objPattern = None
-    self.terminationCriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    self.terminationCriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
 
   def setTerminationCriteria(self, criteria):
     self.terminationCriteria = criteria
 
-  def calculateObjectPattern(self, rows, columns):
+  def calculateObjectPattern(self, rows, columns, square_size):
     self.objPatternRows = rows
     self.objPatternColumns = columns
-    self.objPattern = np.zeros((rows * columns, 3), np.float32)
-    self.objPattern[:, :2] = np.mgrid[0:columns, 0:rows].T.reshape(-1, 2)
+    pattern_size = (self.objPatternColumns, self.objPatternRows)
+    self.objPattern = np.zeros((np.prod(pattern_size), 3), np.float32)
+    self.objPattern[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
+    self.objPattern *= square_size
 
   def setSubPixRadius(self, radius):
     self.subPixRadius = radius
@@ -366,29 +389,29 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     self.flags = flags
 
   def findCheckerboard(self, image):
-    self.imageSize = image.shape[::-1]
     try:
       gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except:
       gray = image
+    self.imageSize = gray.shape[::-1]
 
     # Find the chess board corners
-    ret, corners = cv2.findChessboardCorners(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
+    ret, corners = cv2.findChessboardCorners(gray, (self.objPatternColumns, self.objPatternRows), self.flags)
 
     # If found, add object points, image points (after refining them)
     if ret == True:
       self.objectPoints.append(self.objPattern)
-      self.imagePoints.append(cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria))
-      self.calibrateCamera()
+      cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria)
+      self.imagePoints.append(corners.reshape(-1,2))
 
     return ret
 
   def findCircleGrid(self, image):
-    self.imageSize = image.shape[::-1]
     try:
       gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except:
       gray = image
+    self.imageSize = gray.shape[::-1]
 
     ret, centers = cv2.findCirclesGrid(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
 
@@ -401,12 +424,10 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def calibrateCamera(self):
     if len(self.imagePoints) > 0:
+      print self.imageSize
       ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
-      print 'ret: ' + str(ret)
-      print 'mtx: ' + str(mtx)
-      print 'dist: ' + str(dist)
-      print 'rvecs: ' + str(rvecs)
-      print 'tvecs: ' + str(tvecs)
+      return True, ret, mtx, dist
+    return False
 
   def count(self):
     return len(self.imagePoints)
