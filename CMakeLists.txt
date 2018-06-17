@@ -27,6 +27,7 @@ mark_as_superbuild(VASSTRegistration_DIR)
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(CameraCalibration)
+add_subdirectory(Camera)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
