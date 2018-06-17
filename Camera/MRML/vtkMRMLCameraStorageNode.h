@@ -1,14 +1,14 @@
 /*=auto=========================================================================
 
-  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+Portions (c) Copyright 2018 Robarts Research Institute. All Rights Reserved.
 
-  See COPYRIGHT.txt
-  or http://www.slicer.org/copyright/copyright.txt for details.
+See COPYRIGHT.txt
+or http://www.slicer.org/copyright/copyright.txt for details.
 
-  Program:   3D Slicer
-  Module:    $RCSfile: vtkMRMLCameraStorageNode.h,v $
-  Date:      $Date: 2006/03/19 17:12:29 $
-  Version:   $Revision: 1.3 $
+Program:   3D Slicer
+Module:    $RCSfile: vtkMRMLCameraStorageNode.h,v $
+Date:      $Date: 2018/6/16 10:54:09 $
+Version:   $Revision: 1.0 $
 
 =========================================================================auto=*/
 
@@ -23,9 +23,9 @@
 
 class vtkMRMLCameraNode;
 
-/// \brief MRML node for model storage on disk.
+/// \brief MRML node for camera storage on disk.
 ///
-/// Storage nodes has methods to read/write vtkPolyData to/from disk.
+/// Camera storage nodes have methods to read/write camera calibration details to/from disk.
 class VTK_SLICER_CAMERA_MODULE_MRML_EXPORT vtkMRMLCameraStorageNode : public vtkMRMLStorageNode
 {
 public:
