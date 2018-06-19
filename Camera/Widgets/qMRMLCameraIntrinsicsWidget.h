@@ -16,7 +16,7 @@ Version:   $Revision: 1.0 $
 #define __qMRMLCameraIntrinsicsWidget_h
 
 // qMRMLWidgets includes
-#include <vtkMRMLCameraNode.h>
+#include <vtkMRMLWebcamNode.h>
 #include <qSlicerAbstractModuleWidget.h>
 
 // Camera export includes
@@ -47,12 +47,12 @@ protected:
   void OnNodeIntrinsicsModified(vtkObject* caller, unsigned long event, void* data);
   void OnNodeDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
 
-  void SetCurrentNode(vtkMRMLCameraNode* newNode);
-  vtkMRMLCameraNode* GetCurrentNode() const;
+  void SetCurrentNode(vtkMRMLWebcamNode* newNode);
+  vtkMRMLWebcamNode* GetCurrentNode() const;
 
 protected:
   QScopedPointer<qMRMLCameraIntrinsicsWidgetPrivate> d_ptr;
-  vtkMRMLCameraNode* CurrentNode;
+  vtkMRMLWebcamNode* CurrentNode;
 
 private:
   Q_DECLARE_PRIVATE(qMRMLCameraIntrinsicsWidget);

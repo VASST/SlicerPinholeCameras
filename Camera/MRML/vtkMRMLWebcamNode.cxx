@@ -6,13 +6,13 @@ See COPYRIGHT.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLCameraNode.cxx,v $
+Module:    $RCSfile: vtkMRMLWebcamNode.cxx,v $
 Date:      $Date: 2018/6/16 10:54:09 $
 Version:   $Revision: 1.0 $
 
 =========================================================================auto=*/
 
-#include "vtkMRMLCameraNode.h"
+#include "vtkMRMLWebcamNode.h"
 
 // VTK includes
 #include <vtkCallbackCommand.h>
@@ -25,7 +25,7 @@ Version:   $Revision: 1.0 $
 
 //----------------------------------------------------------------------------
 
-vtkMRMLNodeNewMacro(vtkMRMLCameraNode);
+vtkMRMLNodeNewMacro(vtkMRMLWebcamNode);
 
 //----------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ static void ProcessEvents(vtkObject* object, unsigned long event, void* clientda
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLCameraNode::vtkMRMLCameraNode()
+vtkMRMLWebcamNode::vtkMRMLWebcamNode()
   : vtkMRMLStorableNode()
   , IntrinsicMatrix(NULL)
   , DistortionCoefficients(NULL)
@@ -45,7 +45,7 @@ vtkMRMLCameraNode::vtkMRMLCameraNode()
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLCameraNode::~vtkMRMLCameraNode()
+vtkMRMLWebcamNode::~vtkMRMLWebcamNode()
 {
   if (this->IntrinsicMatrix != NULL)
   {
@@ -60,11 +60,11 @@ vtkMRMLCameraNode::~vtkMRMLCameraNode()
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraNode::Copy(vtkMRMLNode* anode)
+void vtkMRMLWebcamNode::Copy(vtkMRMLNode* anode)
 {
   int disabledModify = this->StartModify();
   Superclass::Copy(anode);
-  vtkMRMLCameraNode* node = vtkMRMLCameraNode::SafeDownCast(anode);
+  vtkMRMLWebcamNode* node = vtkMRMLWebcamNode::SafeDownCast(anode);
 
   this->SetAndObserveIntrinsicMatrix(node->GetIntrinsicMatrix());
   this->SetAndObserveDistortionCoefficients(node->GetDistortionCoefficients());
@@ -73,7 +73,7 @@ void vtkMRMLCameraNode::Copy(vtkMRMLNode* anode)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraNode::SetAndObserveIntrinsicMatrix(vtkMatrix3x3* intrinsicMatrix)
+void vtkMRMLWebcamNode::SetAndObserveIntrinsicMatrix(vtkMatrix3x3* intrinsicMatrix)
 {
   if (this->IntrinsicMatrix != NULL)
   {
@@ -84,12 +84,12 @@ void vtkMRMLCameraNode::SetAndObserveIntrinsicMatrix(vtkMatrix3x3* intrinsicMatr
 
   if (this->IntrinsicMatrix != NULL)
   {
-    this->IntrinsicObserverObserverTag = this->IntrinsicMatrix->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLCameraNode::OnIntrinsicsModified);
+    this->IntrinsicObserverObserverTag = this->IntrinsicMatrix->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnIntrinsicsModified);
   }
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs)
+void vtkMRMLWebcamNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs)
 {
   if (this->DistortionCoefficients != NULL)
   {
@@ -100,26 +100,26 @@ void vtkMRMLCameraNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* dist
 
   if (this->IntrinsicMatrix != NULL)
   {
-    this->DistortionCoefficientsObserverTag = this->DistortionCoefficients->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLCameraNode::OnDistortionCoefficientsModified);
+    this->DistortionCoefficientsObserverTag = this->DistortionCoefficients->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnDistortionCoefficientsModified);
   }
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraNode::OnIntrinsicsModified(vtkObject* caller, unsigned long event, void* data)
+void vtkMRMLWebcamNode::OnIntrinsicsModified(vtkObject* caller, unsigned long event, void* data)
 {
   this->InvokeEvent(IntrinsicsModifiedEvent);
   this->Modified();
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraNode::OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data)
+void vtkMRMLWebcamNode::OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data)
 {
   this->InvokeEvent(DistortionCoefficientsModifiedEvent);
   this->Modified();
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLWebcamNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   Superclass::PrintSelf(os, indent);
 

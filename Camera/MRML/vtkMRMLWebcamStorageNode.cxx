@@ -6,14 +6,14 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkMRMLCameraStorageNode.cxx,v $
+  Module:    $RCSfile: vtkMRMLWebcamStorageNode.cxx,v $
   Date:      $Date: 2018/6/16 10:54:09 $
   Version:   $Revision: 1.0 $
 
 =========================================================================auto=*/
 
-#include "vtkMRMLCameraNode.h"
-#include "vtkMRMLCameraStorageNode.h"
+#include "vtkMRMLWebcamNode.h"
+#include "vtkMRMLWebcamStorageNode.h"
 #include "vtkMRMLScene.h"
 
 // VTK includes
@@ -28,41 +28,41 @@
 
 //----------------------------------------------------------------------------
 
-vtkMRMLNodeNewMacro(vtkMRMLCameraStorageNode);
+vtkMRMLNodeNewMacro(vtkMRMLWebcamStorageNode);
 
 //----------------------------------------------------------------------------
-vtkMRMLCameraStorageNode::vtkMRMLCameraStorageNode()
+vtkMRMLWebcamStorageNode::vtkMRMLWebcamStorageNode()
 {
   this->DefaultWriteFileExtension = "xml";
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLCameraStorageNode::~vtkMRMLCameraStorageNode()
+vtkMRMLWebcamStorageNode::~vtkMRMLWebcamStorageNode()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraStorageNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLWebcamStorageNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMRMLStorageNode::PrintSelf(os, indent);
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraStorageNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLWebcamStorageNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
 }
 
 //----------------------------------------------------------------------------
-bool vtkMRMLCameraStorageNode::CanReadInReferenceNode(vtkMRMLNode* refNode)
+bool vtkMRMLWebcamStorageNode::CanReadInReferenceNode(vtkMRMLNode* refNode)
 {
-  return refNode->IsA("vtkMRMLCameraStorageNode");
+  return refNode->IsA("vtkMRMLWebcamStorageNode");
 }
 
 //----------------------------------------------------------------------------
-int vtkMRMLCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
+int vtkMRMLWebcamStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
 {
-  vtkMRMLCameraNode* cameraNode = dynamic_cast <vtkMRMLCameraNode*>(refNode);
+  vtkMRMLWebcamNode* cameraNode = dynamic_cast <vtkMRMLWebcamNode*>(refNode);
 
   std::string fullName = this->GetFullNameFromFileName();
   if (fullName.empty())
@@ -128,9 +128,9 @@ int vtkMRMLCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
 }
 
 //----------------------------------------------------------------------------
-int vtkMRMLCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
+int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
 {
-  vtkMRMLCameraNode* modelNode = vtkMRMLCameraNode::SafeDownCast(refNode);
+  vtkMRMLWebcamNode* modelNode = vtkMRMLWebcamNode::SafeDownCast(refNode);
 
   std::string fullName = this->GetFullNameFromFileName();
   if (fullName.empty())
@@ -139,7 +139,7 @@ int vtkMRMLCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     return 0;
   }
 
-  vtkMRMLCameraNode* node = this->GetAssociatedDataNode();
+  vtkMRMLWebcamNode* node = this->GetAssociatedDataNode();
 
   cv::FileStorage fs(fullName, cv::FileStorage::WRITE);
 
@@ -185,19 +185,19 @@ int vtkMRMLCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraStorageNode::InitializeSupportedReadFileTypes()
+void vtkMRMLWebcamStorageNode::InitializeSupportedReadFileTypes()
 {
   this->SupportedReadFileTypes->InsertNextValue("OpenCV XML (.xml)");
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLCameraStorageNode::InitializeSupportedWriteFileTypes()
+void vtkMRMLWebcamStorageNode::InitializeSupportedWriteFileTypes()
 {
   this->SupportedWriteFileTypes->InsertNextValue("OpenCV XML (.xml)");
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLCameraNode* vtkMRMLCameraStorageNode::GetAssociatedDataNode()
+vtkMRMLWebcamNode* vtkMRMLWebcamStorageNode::GetAssociatedDataNode()
 {
   if (!this->GetScene())
   {
@@ -205,16 +205,16 @@ vtkMRMLCameraNode* vtkMRMLCameraStorageNode::GetAssociatedDataNode()
   }
 
   std::vector<vtkMRMLNode*> nodes;
-  unsigned int numberOfNodes = this->GetScene()->GetNodesByClass("vtkMRMLCameraNode", nodes);
+  unsigned int numberOfNodes = this->GetScene()->GetNodesByClass("vtkMRMLWebcamNode", nodes);
   for (unsigned int nodeIndex = 0; nodeIndex < numberOfNodes; nodeIndex++)
   {
-    vtkMRMLCameraNode* node = vtkMRMLCameraNode::SafeDownCast(nodes[nodeIndex]);
+    vtkMRMLWebcamNode* node = vtkMRMLWebcamNode::SafeDownCast(nodes[nodeIndex]);
     if (node)
     {
       const char* storageNodeID = node->GetStorageNodeID();
       if (storageNodeID && !strcmp(storageNodeID, this->ID))
       {
-        return vtkMRMLCameraNode::SafeDownCast(node);
+        return vtkMRMLWebcamNode::SafeDownCast(node);
       }
     }
   }

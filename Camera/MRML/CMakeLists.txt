@@ -12,10 +12,10 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  vtkMRMLCameraNode.cxx
-  vtkMRMLCameraNode.h
-  vtkMRMLCameraStorageNode.cxx
-  vtkMRMLCameraStorageNode.h
+  vtkMRMLWebcamNode.cxx
+  vtkMRMLWebcamNode.h
+  vtkMRMLWebcamStorageNode.cxx
+  vtkMRMLWebcamStorageNode.h
   )
 
 set(${KIT}_TARGET_LIBRARIES

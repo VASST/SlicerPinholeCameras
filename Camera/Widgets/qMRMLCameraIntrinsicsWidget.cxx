@@ -20,9 +20,6 @@ Version:   $Revision: 1.0 $
 #include "ui_qMRMLCameraIntrinsicsWidget.h"
 
 // MRML includes
-#include <vtkMRMLCameraNode.h>
-
-// MRML includes
 #include <vtkMRMLScene.h>
 #include <vtkMRMLNode.h>
 
@@ -77,7 +74,7 @@ void qMRMLCameraIntrinsicsWidget::onCameraSelectorChanged(vtkMRMLNode* newNode)
 {
   Q_D(qMRMLCameraIntrinsicsWidget);
 
-  vtkMRMLCameraNode* camNode = vtkMRMLCameraNode::SafeDownCast(newNode);
+  vtkMRMLWebcamNode* camNode = vtkMRMLWebcamNode::SafeDownCast(newNode);
 
   SetCurrentNode(camNode);
 
@@ -139,7 +136,7 @@ void qMRMLCameraIntrinsicsWidget::OnNodeIntrinsicsModified(vtkObject* caller, un
 {
   Q_D(qMRMLCameraIntrinsicsWidget);
 
-  vtkMRMLCameraNode* camNode = vtkMRMLCameraNode::SafeDownCast(caller);
+  vtkMRMLWebcamNode* camNode = vtkMRMLWebcamNode::SafeDownCast(caller);
 
   if (camNode != nullptr && camNode->GetIntrinsicMatrix() != nullptr)
   {
@@ -158,7 +155,7 @@ void qMRMLCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObject
 {
   Q_D(qMRMLCameraIntrinsicsWidget);
 
-  vtkMRMLCameraNode* camNode = vtkMRMLCameraNode::SafeDownCast(caller);
+  vtkMRMLWebcamNode* camNode = vtkMRMLWebcamNode::SafeDownCast(caller);
 
   if (camNode != nullptr && camNode->GetDistortionCoefficients() != nullptr)
   {
@@ -174,7 +171,7 @@ void qMRMLCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObject
 }
 
 //----------------------------------------------------------------------------
-void qMRMLCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLCameraNode* newNode)
+void qMRMLCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLWebcamNode* newNode)
 {
   if (this->CurrentNode != nullptr && this->CurrentNode != newNode)
   {
@@ -185,13 +182,13 @@ void qMRMLCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLCameraNode* newNode)
 
   if (this->CurrentNode != nullptr)
   {
-    this->CurrentNode->AddObserver(vtkMRMLCameraNode::IntrinsicsModifiedEvent, this, &qMRMLCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
-    this->CurrentNode->AddObserver(vtkMRMLCameraNode::DistortionCoefficientsModifiedEvent, this, &qMRMLCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
+    this->CurrentNode->AddObserver(vtkMRMLWebcamNode::IntrinsicsModifiedEvent, this, &qMRMLCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
+    this->CurrentNode->AddObserver(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent, this, &qMRMLCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
   }
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLCameraNode* qMRMLCameraIntrinsicsWidget::GetCurrentNode() const
+vtkMRMLWebcamNode* qMRMLCameraIntrinsicsWidget::GetCurrentNode() const
 {
   return this->CurrentNode;
 }

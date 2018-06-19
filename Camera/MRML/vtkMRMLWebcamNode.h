@@ -6,14 +6,14 @@ See COPYRIGHT.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLCameraNode.h,v $
+Module:    $RCSfile: vtkMRMLWebcamNode.h,v $
 Date:      $Date: 2018/6/16 10:54:09 $
 Version:   $Revision: 1.0 $
 
 =========================================================================auto=*/
 
-#ifndef __vtkMRMLCameraNode_h
-#define __vtkMRMLCameraNode_h
+#ifndef __vtkMRMLWebcamNode_h
+#define __vtkMRMLWebcamNode_h
 
 // MRML includes
 #include "vtkSlicerCameraModuleMRMLExport.h"
@@ -25,21 +25,18 @@ Version:   $Revision: 1.0 $
 #include <vtkMatrix3x3.h>
 #include <vtkDoubleArray.h>
 
-class VTK_SLICER_CAMERA_MODULE_MRML_EXPORT vtkMRMLCameraNode : public vtkMRMLStorableNode
+class VTK_SLICER_CAMERA_MODULE_MRML_EXPORT vtkMRMLWebcamNode : public vtkMRMLStorableNode
 {
 public:
-
-  // BTX
   enum
   {
     IntrinsicsModifiedEvent = 404001,
     DistortionCoefficientsModifiedEvent
   };
-  //ETX
 
 public:
-  static vtkMRMLCameraNode* New();
-  vtkTypeMacro(vtkMRMLCameraNode, vtkMRMLStorableNode);
+  static vtkMRMLWebcamNode* New();
+  vtkTypeMacro(vtkMRMLWebcamNode, vtkMRMLStorableNode);
   void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
 
   virtual vtkMRMLNode* CreateNodeInstance() VTK_OVERRIDE;
@@ -50,7 +47,7 @@ public:
 
   ///
   /// Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() VTK_OVERRIDE {return "Camera";};
+  virtual const char* GetNodeTagName() VTK_OVERRIDE {return "Webcam";};
 
   ///
   /// Set intrinsic matrix
@@ -71,10 +68,10 @@ protected:
   void OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
 
 protected:
-  vtkMRMLCameraNode();
-  ~vtkMRMLCameraNode();
-  vtkMRMLCameraNode(const vtkMRMLCameraNode&);
-  void operator=(const vtkMRMLCameraNode&);
+  vtkMRMLWebcamNode();
+  ~vtkMRMLWebcamNode();
+  vtkMRMLWebcamNode(const vtkMRMLWebcamNode&);
+  void operator=(const vtkMRMLWebcamNode&);
 
   vtkMatrix3x3*       IntrinsicMatrix;
   vtkDoubleArray*     DistortionCoefficients;
