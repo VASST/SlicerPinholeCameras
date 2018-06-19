@@ -6,14 +6,14 @@ See COPYRIGHT.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLCameraNode.h,v $
+Module:    $RCSfile: qMRMLCameraIntrinsicsWidget.h,v $
 Date:      $Date: 2018/6/16 10:54:09 $
 Version:   $Revision: 1.0 $
 
 =========================================================================auto=*/
 
-#ifndef __qSlicerCameraIntrinsicsWidget_h
-#define __qSlicerCameraIntrinsicsWidget_h
+#ifndef __qMRMLCameraIntrinsicsWidget_h
+#define __qMRMLCameraIntrinsicsWidget_h
 
 // qMRMLWidgets includes
 #include <vtkMRMLCameraNode.h>
@@ -25,17 +25,17 @@ Version:   $Revision: 1.0 $
 // Qt includes
 #include <QWidget>
 
-class qSlicerCameraIntrinsicsWidgetPrivate;
+class qMRMLCameraIntrinsicsWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_Camera
-class Q_SLICER_MODULE_CAMERA_WIDGETS_EXPORT qSlicerCameraIntrinsicsWidget : public qSlicerAbstractModuleWidget
+class Q_SLICER_MODULE_CAMERA_WIDGETS_EXPORT qMRMLCameraIntrinsicsWidget : public qSlicerAbstractModuleWidget
 {
   Q_OBJECT
 
 public:
   typedef qSlicerAbstractModuleWidget Superclass;
-  qSlicerCameraIntrinsicsWidget(QWidget* parent = 0);
-  virtual ~qSlicerCameraIntrinsicsWidget();
+  qMRMLCameraIntrinsicsWidget(QWidget* parent = 0);
+  virtual ~qMRMLCameraIntrinsicsWidget();
 
 protected slots:
   void onCameraSelectorChanged(vtkMRMLNode* newNode);
@@ -51,12 +51,12 @@ protected:
   vtkMRMLCameraNode* GetCurrentNode() const;
 
 protected:
-  QScopedPointer<qSlicerCameraIntrinsicsWidgetPrivate> d_ptr;
+  QScopedPointer<qMRMLCameraIntrinsicsWidgetPrivate> d_ptr;
   vtkMRMLCameraNode* CurrentNode;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerCameraIntrinsicsWidget);
-  Q_DISABLE_COPY(qSlicerCameraIntrinsicsWidget);
+  Q_DECLARE_PRIVATE(qMRMLCameraIntrinsicsWidget);
+  Q_DISABLE_COPY(qMRMLCameraIntrinsicsWidget);
 };
 
 #endif

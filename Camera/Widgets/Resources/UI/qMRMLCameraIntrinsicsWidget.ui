@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qSlicerCameraIntrinsicsWidget</class>
+ <class>qMRMLCameraIntrinsicsWidget</class>
  <widget class="QWidget" name="qSlicerCameraIntrinsicsWidget">
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

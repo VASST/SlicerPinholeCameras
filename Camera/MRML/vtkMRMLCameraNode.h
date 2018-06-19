@@ -28,6 +28,16 @@ Version:   $Revision: 1.0 $
 class VTK_SLICER_CAMERA_MODULE_MRML_EXPORT vtkMRMLCameraNode : public vtkMRMLStorableNode
 {
 public:
+
+  // BTX
+  enum
+  {
+    IntrinsicsModifiedEvent = 404001,
+    DistortionCoefficientsModifiedEvent
+  };
+  //ETX
+
+public:
   static vtkMRMLCameraNode* New();
   vtkTypeMacro(vtkMRMLCameraNode, vtkMRMLStorableNode);
   void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
@@ -49,12 +59,6 @@ public:
 
   vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   void SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs);
-
-  enum
-  {
-    IntrinsicsModifiedEvent  = 404001,
-    DistortionCoefficientsModifiedEvent = 404002
-  };
 
 protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);

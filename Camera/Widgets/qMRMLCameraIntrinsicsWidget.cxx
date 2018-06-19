@@ -6,7 +6,7 @@ See COPYRIGHT.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLCameraNode.h,v $
+Module:    $RCSfile: qMRMLCameraIntrinsicsWidget.h,v $
 Date:      $Date: 2018/6/16 10:54:09 $
 Version:   $Revision: 1.0 $
 
@@ -15,9 +15,9 @@ Version:   $Revision: 1.0 $
 // Qt includes
 
 // Local includes
-#include "qSlicerCameraIntrinsicsWidget.h"
+#include "qMRMLCameraIntrinsicsWidget.h"
 #include "vtkSlicerCameraLogic.h"
-#include "ui_qSlicerCameraIntrinsicsWidget.h"
+#include "ui_qMRMLCameraIntrinsicsWidget.h"
 
 // MRML includes
 #include <vtkMRMLCameraNode.h>
@@ -30,52 +30,52 @@ Version:   $Revision: 1.0 $
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_Camera
-class qSlicerCameraIntrinsicsWidgetPrivate : public Ui_qSlicerCameraIntrinsicsWidget
+class qMRMLCameraIntrinsicsWidgetPrivate : public Ui_qMRMLCameraIntrinsicsWidget
 {
-  Q_DECLARE_PUBLIC(qSlicerCameraIntrinsicsWidget);
+  Q_DECLARE_PUBLIC(qMRMLCameraIntrinsicsWidget);
 protected:
-  qSlicerCameraIntrinsicsWidget* const q_ptr;
+  qMRMLCameraIntrinsicsWidget* const q_ptr;
 public:
-  qSlicerCameraIntrinsicsWidgetPrivate(qSlicerCameraIntrinsicsWidget& object);
+  qMRMLCameraIntrinsicsWidgetPrivate(qMRMLCameraIntrinsicsWidget& object);
 
   vtkSlicerCameraLogic* logic();
 };
 
 //-----------------------------------------------------------------------------
-// qSlicerCameraIntrinsicsWidgetPrivate methods
+// qMRMLCameraIntrinsicsWidgetPrivate methods
 
 //-----------------------------------------------------------------------------
-qSlicerCameraIntrinsicsWidgetPrivate::qSlicerCameraIntrinsicsWidgetPrivate(qSlicerCameraIntrinsicsWidget& object)
+qMRMLCameraIntrinsicsWidgetPrivate::qMRMLCameraIntrinsicsWidgetPrivate(qMRMLCameraIntrinsicsWidget& object)
   : q_ptr(&object)
 {
 }
 
 //-----------------------------------------------------------------------------
-vtkSlicerCameraLogic* qSlicerCameraIntrinsicsWidgetPrivate::logic()
+vtkSlicerCameraLogic* qMRMLCameraIntrinsicsWidgetPrivate::logic()
 {
-  Q_Q(qSlicerCameraIntrinsicsWidget);
+  Q_Q(qMRMLCameraIntrinsicsWidget);
   return vtkSlicerCameraLogic::SafeDownCast(q->logic());
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerCameraIntrinsicsWidget methods
+// qMRMLCameraIntrinsicsWidget methods
 
 //------------------------------------------------------------------------------
-qSlicerCameraIntrinsicsWidget::qSlicerCameraIntrinsicsWidget(QWidget* vparent)
+qMRMLCameraIntrinsicsWidget::qMRMLCameraIntrinsicsWidget(QWidget* vparent)
   : qSlicerAbstractModuleWidget(vparent)
 {
 
 }
 
 //------------------------------------------------------------------------------
-qSlicerCameraIntrinsicsWidget::~qSlicerCameraIntrinsicsWidget()
+qMRMLCameraIntrinsicsWidget::~qMRMLCameraIntrinsicsWidget()
 {
 }
 
 //----------------------------------------------------------------------------
-void qSlicerCameraIntrinsicsWidget::onCameraSelectorChanged(vtkMRMLNode* newNode)
+void qMRMLCameraIntrinsicsWidget::onCameraSelectorChanged(vtkMRMLNode* newNode)
 {
-  Q_D(qSlicerCameraIntrinsicsWidget);
+  Q_D(qMRMLCameraIntrinsicsWidget);
 
   vtkMRMLCameraNode* camNode = vtkMRMLCameraNode::SafeDownCast(newNode);
 
@@ -109,9 +109,9 @@ void qSlicerCameraIntrinsicsWidget::onCameraSelectorChanged(vtkMRMLNode* newNode
 }
 
 //----------------------------------------------------------------------------
-void qSlicerCameraIntrinsicsWidget::setup()
+void qMRMLCameraIntrinsicsWidget::setup()
 {
-  Q_D(qSlicerCameraIntrinsicsWidget);
+  Q_D(qMRMLCameraIntrinsicsWidget);
   d->setupUi(this);
   this->Superclass::setup();
 
@@ -121,9 +121,9 @@ void qSlicerCameraIntrinsicsWidget::setup()
 }
 
 //----------------------------------------------------------------------------
-void qSlicerCameraIntrinsicsWidget::setMRMLScene(vtkMRMLScene* scene)
+void qMRMLCameraIntrinsicsWidget::setMRMLScene(vtkMRMLScene* scene)
 {
-  Q_D(qSlicerCameraIntrinsicsWidget);
+  Q_D(qMRMLCameraIntrinsicsWidget);
 
   this->Superclass::setMRMLScene(scene);
   if (scene == NULL)
@@ -135,9 +135,9 @@ void qSlicerCameraIntrinsicsWidget::setMRMLScene(vtkMRMLScene* scene)
 }
 
 //----------------------------------------------------------------------------
-void qSlicerCameraIntrinsicsWidget::OnNodeIntrinsicsModified(vtkObject* caller, unsigned long event, void* data)
+void qMRMLCameraIntrinsicsWidget::OnNodeIntrinsicsModified(vtkObject* caller, unsigned long event, void* data)
 {
-  Q_D(qSlicerCameraIntrinsicsWidget);
+  Q_D(qMRMLCameraIntrinsicsWidget);
 
   vtkMRMLCameraNode* camNode = vtkMRMLCameraNode::SafeDownCast(caller);
 
@@ -154,9 +154,9 @@ void qSlicerCameraIntrinsicsWidget::OnNodeIntrinsicsModified(vtkObject* caller, 
 }
 
 //----------------------------------------------------------------------------
-void qSlicerCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data)
+void qMRMLCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data)
 {
-  Q_D(qSlicerCameraIntrinsicsWidget);
+  Q_D(qMRMLCameraIntrinsicsWidget);
 
   vtkMRMLCameraNode* camNode = vtkMRMLCameraNode::SafeDownCast(caller);
 
@@ -174,7 +174,7 @@ void qSlicerCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObje
 }
 
 //----------------------------------------------------------------------------
-void qSlicerCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLCameraNode* newNode)
+void qMRMLCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLCameraNode* newNode)
 {
   if (this->CurrentNode != nullptr && this->CurrentNode != newNode)
   {
@@ -185,13 +185,13 @@ void qSlicerCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLCameraNode* newNode)
 
   if (this->CurrentNode != nullptr)
   {
-    this->CurrentNode->AddObserver(vtkMRMLCameraNode::IntrinsicsModifiedEvent, this, &qSlicerCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
-    this->CurrentNode->AddObserver(vtkMRMLCameraNode::DistortionCoefficientsModifiedEvent, this, &qSlicerCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
+    this->CurrentNode->AddObserver(vtkMRMLCameraNode::IntrinsicsModifiedEvent, this, &qMRMLCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
+    this->CurrentNode->AddObserver(vtkMRMLCameraNode::DistortionCoefficientsModifiedEvent, this, &qMRMLCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
   }
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLCameraNode* qSlicerCameraIntrinsicsWidget::GetCurrentNode() const
+vtkMRMLCameraNode* qMRMLCameraIntrinsicsWidget::GetCurrentNode() const
 {
   return this->CurrentNode;
 }

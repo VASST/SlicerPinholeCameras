@@ -12,16 +12,16 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  qSlicerCameraIntrinsicsWidget.cxx
-  qSlicerCameraIntrinsicsWidget.h
+  qMRMLCameraIntrinsicsWidget.cxx
+  qMRMLCameraIntrinsicsWidget.h
   )
 
 set(${KIT}_MOC_SRCS
-  qSlicerCameraIntrinsicsWidget.h
+  qMRMLCameraIntrinsicsWidget.h
   )
 
 set(${KIT}_UI_SRCS
-  Resources/UI/qSlicerCameraIntrinsicsWidget.ui
+  Resources/UI/qMRMLCameraIntrinsicsWidget.ui
   )
 
 set(${KIT}_RESOURCES
@@ -47,5 +47,5 @@ SlicerMacroBuildModuleWidgets(
   WRAP_PYTHONQT
   )
 
-# Plugin
-#add_subdirectory(Plugins)
+#-----------------------------------------------------------------------------
+add_subdirectory(DesignerPlugins)

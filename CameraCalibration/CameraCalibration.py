@@ -1,7 +1,7 @@
 import os, vtk, qt, ctk, slicer, numpy as np
 import cv2
-from vtk.util.numpy_support import vtk_to_numpy
-
+from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
+from decimal import Decimal
 from slicer.ScriptedLoadableModule import *
 
 # CameraCalibration
@@ -39,6 +39,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     self.centerFiducialSelectionNode = None
     self.copyNode = None
+    self.imageGridNode = None
+    self.trivialProducer = None
     self.widget = None
 
     self.inputsContainer = None
@@ -49,6 +51,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     # Inputs
     self.imageSelector = None
     self.cameraTransformSelector = None
+    self.stylusTipTransformSelector = None
 
     # Tracker
     self.manualButton = None
@@ -57,6 +60,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.autoModeButton = None
     self.semiAutoModeButton = None
     self.autoButton = None
+    self.resetButton = None
 
     # Intrinsics
     self.capIntrinsicButton = None
@@ -68,8 +72,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.fastCheckButton = None
     self.symmetricButton = None
     self.asymmetricButton = None
+    self.squareSizeEdit = None
     self.clusteringButton = None
     self.labelResult = None
+
+    self.cameraMatrixTable = None
+    self.distCoeffsTable = None
 
     self.columnsSpinBox = None
     self.rowsSpinBox = None
@@ -80,9 +88,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.sceneObserverTag = None
 
   def setup(self):
-    # TODO Debug only, remove once finished
-    slicer.camMod = self
-
     ScriptedLoadableModuleWidget.setup(self)
 
     # Load the UI From file
@@ -92,6 +97,14 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.widget = slicer.util.loadUI(path)
     self.layout.addWidget(self.widget)
 
+    # Nodes
+    self.cameraIntrinWidget = CameraCalibrationWidget.get(self.widget, "cameraIntrinsicsWidget")
+
+    # Inputs
+    self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
+    self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
+    self.stylusTipTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_StylusTipSelector")
+
     # Tracker calibration members
     self.inputsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
     self.trackerContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Tracker")
@@ -99,8 +112,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.manualButton = CameraCalibrationWidget.get(self.widget, "pushButton_Manual")
     self.semiAutoButton = CameraCalibrationWidget.get(self.widget, "pushButton_SemiAuto")
     self.autoButton = CameraCalibrationWidget.get(self.widget, "pushButton_Automatic")
-    self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
-    self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
     self.manualModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Manual")
     self.semiAutoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
     self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
@@ -122,6 +133,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.asymmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
     self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
     self.labelResult = CameraCalibrationWidget.get(self.widget, "label_ResultValue")
+
+
     self.cameraMatrixTable = CameraCalibrationWidget.get(self.widget, "tableWidget_CameraMatrix")
     self.distCoeffsTable = CameraCalibrationWidget.get(self.widget, "tableWidget_DistCoeffs")
 
@@ -132,6 +145,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     # UI file method does not do mrml scene connections, do them manually
     self.imageSelector.setMRMLScene(slicer.mrmlScene)
     self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
+    self.stylusTipTransformSelector.setMRMLScene(slicer.mrmlScene)
+
+    # Inputs
+    self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
+    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.stylusTipTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     # Connections
     self.capIntrinsicButton.connect('clicked(bool)', self.onIntrinsicCapture)
@@ -144,8 +163,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.manualButton.connect('clicked(bool)', self.onManualButton)
     self.semiAutoButton.connect('clicked(bool)', self.onSemiAutoButton)
     self.autoButton.connect('clicked(bool)', self.onAutoButton)
-    self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.manualModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
 
@@ -169,6 +186,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Refresh Apply button state
     self.onSelect()
+    self.onProcessingModeChanged()
 
   def cleanup(self):
     self.capIntrinsicButton.disconnect('clicked(bool)', self.onIntrinsicCapture)
@@ -216,6 +234,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
             self.cameraMatrixTable.item(i,j).setText(mtx[i][j])
         for i in range(0, len(dist[0])):
             self.distCoeffsTable.item(0,i).setText(dist[0][i])
+
     else:
       self.labelResult.text = "Failure."
 
@@ -232,6 +251,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     # Set red slice to the copy node
     if self.imageSelector.currentNode() is not None:
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().FitSliceToAll()
     self.onSelect()
 
   def onFlagChanged(self):
@@ -279,10 +299,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onSelect(self):
     self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None
     self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None
-
-    self.manualButton.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode()
-    self.semiAutoButton.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode()
-    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode()
+    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode() and self.stylusTipTransformSelector.currentNode()
 
   def onProcessingModeChanged(self):
     if self.manualModeButton.checked:
@@ -332,17 +349,40 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onNodeAdded(self, caller, event, callData):
-    if type(callData) is slicer.vtkMRMLMarkupsFiducialNode:
+    if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing is True:
       arr = [0,0,0]
       callData.GetMarkupPoint(callData.GetNumberOfMarkups()-1, 0, arr)
       callData.RemoveAllMarkups()
       slicer.mrmlScene.RemoveNode(callData)
+      point = [[[arr[0],arr[1]]]] # cv2.undistortPoints wants points to be in a 3-dimensional array
 
-      # Re-enable
+      # Record stylus point in reference space
+      mat = vtk.vtkMatrix4x4()
+      self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(mat)
+      stylusTipPoint = [mat.GetElement(0,3), mat.GetElement(1,3), mat.GetElement(2,3)]
+
+      # transform camera origin (0,0,0) by current camera tracker sensor pose (aka grab translation)
+      self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(mat)
+      cameraOriginInReference = np.asarray([mat.GetElement(0,3), mat.GetElement(1,3), mat.GetElement(2,3)])
+
+      # Undistort point according to camera parameters
+      mtx, dist = self.getIntrinsicsFromUI()
+
+      undistPoint = cv2.undistortPoints(point, mtx, dist)
+      undistPoint = np.asarray([[undistPoint[0][0][0]], [undistPoint[0][0][1]], [1.0]])
+
+      # multiply by inverse intrinsics to get point on image plane
+      backProjectedPoint = np.linalg.inv(mtx) * undistPoint
+
+      # camera ray is vector difference of transformed camera origin point and transformed undistorted clicked point
+      backProjectedPointInReference = np.asarray(mat.MultiplyPoint(backProjectedPoint.transpose()))
+      lineInReference = backProjectedPointInReference - cameraOriginInReference
+
+      # Store point and line pair
+
+      # Re-enable UI
       self.inputsContainer.setEnabled(True)
       self.trackerContainer.setEnabled(True)
-
-      # TODO : store point and line pair
 
       # Resume playback
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.centerFiducialSelectionNode.GetID())
@@ -352,6 +392,18 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   def onAutoButton(self):
     pass
+
+  def getIntrinsicsFromUI(self):
+    mtx = np.asmatrix(np.eye(3, 3, dtype='float64'))
+    for i in range(0, 3):
+      for j in range(0, 3):
+        mtx[i,j] = Decimal(self.cameraMatrixTable.item(i, j).text())
+
+    dist = np.zeros((1, self.distCoeffsTable.columnCount), dtype='float64')
+    for i in range(0, self.distCoeffsTable.columnCount):
+      dist[0,i] = Decimal(self.distCoeffsTable.item(0, i).text())
+
+    return mtx, dist
 
 # CameraCalibrationLogic
 class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
@@ -399,9 +451,9 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     ret, corners = cv2.findChessboardCorners(gray, (self.objPatternColumns, self.objPatternRows), self.flags)
 
     # If found, add object points, image points (after refining them)
-    if ret == True:
+    if ret:
       self.objectPoints.append(self.objPattern)
-      cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria)
+      corners2 = cv2.cornerSubPix(gray, corners, (self.subPixRadius, self.subPixRadius), (-1, -1), self.terminationCriteria)
       self.imagePoints.append(corners.reshape(-1,2))
 
     return ret
