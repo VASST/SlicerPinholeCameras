@@ -26,6 +26,7 @@ Version:   $Revision: 1.0 $
 #include <QWidget>
 
 class qMRMLWebcamIntrinsicsWidgetPrivate;
+class QTableWidgetItem;
 
 /// \ingroup Slicer_QtModules_Webcam
 class Q_SLICER_MODULE_WEBCAMS_WIDGETS_EXPORT qMRMLWebcamIntrinsicsWidget : public qSlicerAbstractModuleWidget
@@ -37,11 +38,18 @@ public:
   qMRMLWebcamIntrinsicsWidget(QWidget* parent = 0);
   virtual ~qMRMLWebcamIntrinsicsWidget();
 
+  vtkMRMLWebcamNode* GetCurrentNode() const;
+
 public slots:
   virtual void setMRMLScene(vtkMRMLScene*);
 
+  void copyData();
+  void pasteData();
+
 protected slots:
   void onWebcamSelectorChanged(vtkMRMLNode* newNode);
+  void onIntrinsicItemChanged(QTableWidgetItem* item);
+  void onDistortionItemChanged(QTableWidgetItem* item);
 
 protected:
   virtual void setup();
@@ -50,11 +58,13 @@ protected:
   void OnNodeDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
 
   void SetCurrentNode(vtkMRMLWebcamNode* newNode);
-  vtkMRMLWebcamNode* GetCurrentNode() const;
 
 protected:
   QScopedPointer<qMRMLWebcamIntrinsicsWidgetPrivate> d_ptr;
   vtkMRMLWebcamNode* CurrentNode;
+
+  unsigned long IntrinsicObserverTag;
+  unsigned long DistortionObserverTag;
 
 private:
   Q_DECLARE_PRIVATE(qMRMLWebcamIntrinsicsWidget);

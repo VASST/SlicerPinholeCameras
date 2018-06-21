@@ -13,6 +13,7 @@ Version:   $Revision: 1.0 $
 =========================================================================auto=*/
 
 #include "vtkMRMLWebcamNode.h"
+#include "vtkMRMLWebcamStorageNode.h"
 
 // VTK includes
 #include <vtkCallbackCommand.h>
@@ -29,17 +30,11 @@ vtkMRMLNodeNewMacro(vtkMRMLWebcamNode);
 
 //----------------------------------------------------------------------------
 
-// Handles the events
-static void ProcessEvents(vtkObject* object, unsigned long event, void* clientdata, void* calldata)
-{
-
-}
-
 //-----------------------------------------------------------------------------
 vtkMRMLWebcamNode::vtkMRMLWebcamNode()
   : vtkMRMLStorableNode()
-  , IntrinsicMatrix(NULL)
-  , DistortionCoefficients(NULL)
+  , IntrinsicMatrix(nullptr)
+  , DistortionCoefficients(nullptr)
 {
 
 }
@@ -102,6 +97,12 @@ void vtkMRMLWebcamNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* dist
   {
     this->DistortionCoefficientsObserverTag = this->DistortionCoefficients->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnDistortionCoefficientsModified);
   }
+}
+
+//----------------------------------------------------------------------------
+vtkMRMLStorageNode* vtkMRMLWebcamNode::CreateDefaultStorageNode()
+{
+  return vtkMRMLStorageNode::SafeDownCast(vtkMRMLWebcamStorageNode::New());
 }
 
 //----------------------------------------------------------------------------

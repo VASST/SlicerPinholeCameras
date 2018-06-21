@@ -42,6 +42,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.imageGridNode = None
     self.trivialProducer = None
     self.widget = None
+    self.cameraIntrinWidget = None
 
     self.inputsContainer = None
     self.trackerContainer = None
@@ -75,9 +76,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.squareSizeEdit = None
     self.clusteringButton = None
     self.labelResult = None
-
-    self.cameraMatrixTable = None
-    self.distCoeffsTable = None
 
     self.columnsSpinBox = None
     self.rowsSpinBox = None
@@ -134,15 +132,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
     self.labelResult = CameraCalibrationWidget.get(self.widget, "label_ResultValue")
 
-
-    self.cameraMatrixTable = CameraCalibrationWidget.get(self.widget, "tableWidget_CameraMatrix")
-    self.distCoeffsTable = CameraCalibrationWidget.get(self.widget, "tableWidget_DistCoeffs")
-
     # Disable capture as image processing isn't active yet
     self.trackerContainer.setEnabled(False)
     self.intrinsicsContainer.setEnabled(False)
 
     # UI file method does not do mrml scene connections, do them manually
+    self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
     self.imageSelector.setMRMLScene(slicer.mrmlScene)
     self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
     self.stylusTipTransformSelector.setMRMLScene(slicer.mrmlScene)
@@ -229,23 +224,16 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.labelResult.text = "Success (" + str(self.logic.count()) + ")"
       done, error, mtx, dist = self.logic.calibrateCamera()
       if done:
-        for i in range(0,3):
-          for j in range(0,3):
-            self.cameraMatrixTable.item(i,j).setText(mtx[i][j])
-        for i in range(0, len(dist[0])):
-            self.distCoeffsTable.item(0,i).setText(dist[0][i])
-
+        self.cameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
+        self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
     else:
       self.labelResult.text = "Failure."
 
   def onReset(self):
     self.logic.resetIntrinsic()
     self.labelResult.text = "Reset."
-    for i in range(0, 3):
-      for j in range(0, 3):
-        self.cameraMatrixTable.item(i, j).setText(0.0)
-    for i in range(0, self.distCoeffsTable.columnCount):
-      self.distCoeffsTable.item(0, i).setText(0.0)
+    self.cameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3.Identity())
+    self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -297,9 +285,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.clusteringButton.enabled = True
 
   def onSelect(self):
-    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None
-    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None
-    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode() and self.stylusTipTransformSelector.currentNode()
+    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None and self.cameraIntrinWidget.GetCurrentNode() is not None
+    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None and self.cameraIntrinWidget.GetCurrentNode() is not None
+    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode() and self.stylusTipTransformSelector.currentNode() and self.cameraIntrinWidget.GetCurrentNode() is not None
 
   def onProcessingModeChanged(self):
     if self.manualModeButton.checked:
@@ -366,7 +354,18 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       cameraOriginInReference = np.asarray([mat.GetElement(0,3), mat.GetElement(1,3), mat.GetElement(2,3)])
 
       # Undistort point according to camera parameters
-      mtx, dist = self.getIntrinsicsFromUI()
+      mat = self.cameraIntrinWidget.GetCurrentNode().GetIntrinsicMatrix()
+      pts = self.cameraIntrinWidget.GetCurrentNode().GetDistortionCoefficients()
+
+      # Convert vtk to numpy
+      mtx = np.asmatrix(np.eye(3, 3, dtype='float64'))
+      for i in range(0, 3):
+        for j in range(0, 3):
+          mtx[i, j] = mat.GetElement(i,j)
+      dist = np.zeros((1, self.distCoeffsTable.columnCount), dtype='float64')
+      for i in range(0, pts.GetNumberOfValues()):
+        dist[0, i] = pts.GetValue(i)
+
 
       undistPoint = cv2.undistortPoints(point, mtx, dist)
       undistPoint = np.asarray([[undistPoint[0][0][0]], [undistPoint[0][0][1]], [1.0]])
@@ -392,18 +391,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   def onAutoButton(self):
     pass
-
-  def getIntrinsicsFromUI(self):
-    mtx = np.asmatrix(np.eye(3, 3, dtype='float64'))
-    for i in range(0, 3):
-      for j in range(0, 3):
-        mtx[i,j] = Decimal(self.cameraMatrixTable.item(i, j).text())
-
-    dist = np.zeros((1, self.distCoeffsTable.columnCount), dtype='float64')
-    for i in range(0, self.distCoeffsTable.columnCount):
-      dist[0,i] = Decimal(self.distCoeffsTable.item(0, i).text())
-
-    return mtx, dist
 
 # CameraCalibrationLogic
 class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
@@ -478,7 +465,14 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     if len(self.imagePoints) > 0:
       print self.imageSize
       ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
-      return True, ret, mtx, dist
+      mat = vtk.vtkMatrix3x3()
+      for i in range(0, 3):
+        for j in range(0, 3):
+          mat.SetElement(i,j, mtx[i,j])
+      pts = vtk.vtkDoubleArray()
+      for i in range(0, len(dist[0])):
+        pts.InsertNextValue(dist[0,i])
+      return True, ret, mat, pts
     return False
 
   def count(self):

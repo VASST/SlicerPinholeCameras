@@ -57,6 +57,8 @@ public:
   vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   void SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs);
 
+  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() VTK_OVERRIDE;
+
 protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   vtkSetObjectMacro(DistortionCoefficients, vtkDoubleArray);

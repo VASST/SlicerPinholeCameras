@@ -14,6 +14,8 @@ Version:   $Revision: 1.0 $
 
 // Webcams Logic includes
 #include "vtkSlicerWebcamsLogic.h"
+#include "vtkMRMLWebcamNode.h"
+#include "vtkMRMLWebcamStorageNode.h"
 
 // MRML includes
 #include <vtkMRMLScene.h>
@@ -59,6 +61,12 @@ void vtkSlicerWebcamsLogic::SetMRMLSceneInternal(vtkMRMLScene* newScene)
 void vtkSlicerWebcamsLogic::RegisterNodes()
 {
   assert(this->GetMRMLScene() != 0);
+
+  vtkMRMLScene* scene = this->GetMRMLScene();
+
+  // Nodes
+  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLWebcamNode>::New());
+  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLWebcamStorageNode>::New());
 }
 
 //---------------------------------------------------------------------------
