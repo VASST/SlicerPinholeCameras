@@ -2,6 +2,12 @@
 <ui version="4.0">
  <class>qMRMLWebcamIntrinsicsWidget</class>
  <widget class="QWidget" name="qMRMLWebcamIntrinsicsWidget">
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="ctkCollapsibleButton" name="collapsibleButton_Camera">
@@ -25,17 +31,11 @@
        <widget class="qMRMLNodeComboBox" name="comboBox_CameraSelector">
         <property name="nodeTypes">
          <stringlist>
-          <string>vtkMRMLCameraNode</string>
+          <string>vtkMRMLWebcamNode</string>
          </stringlist>
         </property>
         <property name="noneEnabled">
          <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>false</bool>
         </property>
         <property name="renameEnabled">
          <bool>true</bool>
@@ -47,6 +47,12 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_CameraMatrix">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="title">
       <string>Camera Matrix</string>
      </property>
@@ -203,6 +209,12 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_DistCoeffs">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="title">
       <string>Distortion Coefficients</string>
      </property>

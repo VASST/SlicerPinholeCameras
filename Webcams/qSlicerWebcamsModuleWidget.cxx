@@ -59,8 +59,6 @@ void qSlicerWebcamsModuleWidget::setMRMLScene(vtkMRMLScene* scene)
   Q_D(qSlicerWebcamsModuleWidget);
 
   this->Superclass::setMRMLScene(scene);
-
-  d->webcamIntrinsicsWidget->setMRMLScene(scene);
 }
 
 //-----------------------------------------------------------------------------
@@ -69,4 +67,6 @@ void qSlicerWebcamsModuleWidget::setup()
   Q_D(qSlicerWebcamsModuleWidget);
   d->setupUi(this);
   this->Superclass::setup();
+
+  connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)), d->webcamIntrinsicsWidget, SLOT(setMRMLScene(vtkMRMLScene*)));
 }

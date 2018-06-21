@@ -30,8 +30,10 @@ Version:   $Revision: 1.0 $
 class qMRMLWebcamIntrinsicsWidgetPrivate : public Ui_qMRMLWebcamIntrinsicsWidget
 {
   Q_DECLARE_PUBLIC(qMRMLWebcamIntrinsicsWidget);
+
 protected:
   qMRMLWebcamIntrinsicsWidget* const q_ptr;
+
 public:
   qMRMLWebcamIntrinsicsWidgetPrivate(qMRMLWebcamIntrinsicsWidget& object);
 
@@ -60,8 +62,10 @@ vtkSlicerWebcamsLogic* qMRMLWebcamIntrinsicsWidgetPrivate::logic()
 //------------------------------------------------------------------------------
 qMRMLWebcamIntrinsicsWidget::qMRMLWebcamIntrinsicsWidget(QWidget* vparent)
   : qSlicerAbstractModuleWidget(vparent)
+  , d_ptr(new qMRMLWebcamIntrinsicsWidgetPrivate(*this))
+  , CurrentNode(nullptr)
 {
-
+  this->setup();
 }
 
 //------------------------------------------------------------------------------
@@ -115,6 +119,7 @@ void qMRMLWebcamIntrinsicsWidget::setup()
   // --------------------------------------------------
   // Connectors section
   connect(d->comboBox_CameraSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), this, SLOT(onWebcamSelectorChanged(vtkMRMLNode*)));
+  connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)), d->comboBox_CameraSelector, SLOT(setMRMLScene(vtkMRMLScene*)));
 }
 
 //----------------------------------------------------------------------------
@@ -123,8 +128,6 @@ void qMRMLWebcamIntrinsicsWidget::setMRMLScene(vtkMRMLScene* scene)
   Q_D(qMRMLWebcamIntrinsicsWidget);
 
   this->Superclass::setMRMLScene(scene);
-
-  d->comboBox_CameraSelector->setMRMLScene(scene);
 }
 
 //----------------------------------------------------------------------------

@@ -15,7 +15,14 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="qMRMLWebcamIntrinsicsWidget" name="webcamIntrinsicsWidget"/>
+    <widget class="qMRMLWebcamIntrinsicsWidget" name="webcamIntrinsicsWidget">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
    <item>
     <spacer name="verticalSpacer">
