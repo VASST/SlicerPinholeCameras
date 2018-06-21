@@ -2,7 +2,7 @@
 set(MODULE_NAME CameraCalibration)
 
 #-----------------------------------------------------------------------------
-#find_package(SlicerOpenCV REQUIRED)
+find_package(SlicerOpenCV REQUIRED)
 find_package(VASSTRegistration REQUIRED)
 
 #-----------------------------------------------------------------------------
