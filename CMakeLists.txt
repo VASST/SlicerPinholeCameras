@@ -5,7 +5,7 @@ project(SlicerCamera)
 #-----------------------------------------------------------------------------
 # Extension meta-information
 set(EXTENSION_HOMEPAGE "http://slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/SlicerCamera")
-set(EXTENSION_CATEGORY "Camera")
+set(EXTENSION_CATEGORY "Webcams")
 set(EXTENSION_CONTRIBUTORS "Adam Rankin (Robarts Research Institute), Elvis Chen (Robarts Research Institute)")
 set(EXTENSION_DESCRIPTION "This extension contains modules for interacting with cameras (calibration, capture, etc...)")
 set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/SlicerCamera.png")
@@ -27,7 +27,7 @@ mark_as_superbuild(VASSTRegistration_DIR)
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(CameraCalibration)
-add_subdirectory(Camera)
+add_subdirectory(Webcams)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

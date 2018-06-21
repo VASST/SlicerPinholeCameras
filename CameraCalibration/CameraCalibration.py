@@ -9,7 +9,7 @@ class CameraCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Calibration"
-    self.parent.categories = ["Camera"]
+    self.parent.categories = ["Webcams"]
     self.parent.dependencies = []
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """Perform intrinsic and extrinsic camera calibration against an external tracker."""
