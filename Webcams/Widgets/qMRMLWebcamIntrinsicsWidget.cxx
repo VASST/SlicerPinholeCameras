@@ -247,6 +247,8 @@ void qMRMLWebcamIntrinsicsWidget::onWebcamSelectorChanged(vtkMRMLNode* newNode)
     if (camNode->GetDistortionCoefficients())
     {
       d->tableWidget_DistCoeffs->clear();
+      d->tableWidget_DistCoeffs->setRowCount(0);
+      d->tableWidget_DistCoeffs->setColumnCount(0);
       d->tableWidget_DistCoeffs->insertRow(0);
 
       for (int i = 0; i < camNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
@@ -339,6 +341,8 @@ void qMRMLWebcamIntrinsicsWidget::setup()
 
   this->connect(d->CopyAction, SIGNAL(triggered()), SLOT(copyData()));
   this->connect(d->PasteAction, SIGNAL(triggered()), SLOT(pasteData()));
+
+  d->tableWidget_DistCoeffs->setMaximumHeight(d->tableWidget_DistCoeffs->rowHeight(0));
 }
 
 //----------------------------------------------------------------------------
@@ -444,6 +448,8 @@ void qMRMLWebcamIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObject
     bool oldState = d->tableWidget_DistCoeffs->blockSignals(true);
 
     d->tableWidget_DistCoeffs->clear();
+    d->tableWidget_DistCoeffs->setRowCount(0);
+    d->tableWidget_DistCoeffs->setColumnCount(0);
     d->tableWidget_DistCoeffs->insertRow(0);
 
     for (int i = 0; i < camNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
