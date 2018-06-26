@@ -43,6 +43,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.trivialProducer = None
     self.widget = None
     self.cameraIntrinWidget = None
+    self.cameraSelector = None
 
     self.inputsContainer = None
     self.trackerContainer = None
@@ -97,6 +98,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Nodes
     self.cameraIntrinWidget = CameraCalibrationWidget.get(self.widget, "cameraIntrinsicsWidget")
+
+    # Workaround for camera selector
+    self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
 
     # Inputs
     self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
@@ -285,9 +289,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.clusteringButton.enabled = True
 
   def onSelect(self):
-    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None and self.cameraIntrinWidget.GetCurrentNode() is not None
-    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None and self.cameraIntrinWidget.GetCurrentNode() is not None
-    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode() and self.stylusTipTransformSelector.currentNode() and self.cameraIntrinWidget.GetCurrentNode() is not None
+    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None and self.cameraSelector.currentNode() is not None
+    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None and self.cameraSelector.currentNode() is not None
+    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode() and self.stylusTipTransformSelector.currentNode() and self.cameraSelector.currentNode() is not None
 
   def onProcessingModeChanged(self):
     if self.manualModeButton.checked:
@@ -314,13 +318,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       return()
 
     # Make a copy of the volume node (aka freeze cv capture) to allow user to play with detection parameters or click on center
-    if self.copyNode is not None:
-      # Clean up old copy
-      slicer.mrmlScene.RemoveNode(self.copyNode)
-      self.copyNode = None
-
     self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
     self.copyNode = slicer.mrmlScene.CopyNode(self.centerFiducialSelectionNode)
+    self.copyNode.SetName('FrozenImage')
 
     # Set red slice to the copy node
     slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.copyNode.GetID())
@@ -338,44 +338,45 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onNodeAdded(self, caller, event, callData):
     if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing is True:
+      self.isManualCapturing = False
+      slicer.mrmlScene.RemoveNode(self.copyNode)
+      self.copyNode = None
+
       arr = [0,0,0]
       callData.GetMarkupPoint(callData.GetNumberOfMarkups()-1, 0, arr)
       callData.RemoveAllMarkups()
       slicer.mrmlScene.RemoveNode(callData)
-      point = [[[arr[0],arr[1]]]] # cv2.undistortPoints wants points to be in a 3-dimensional array
+      point = np.zeros((1,1,2),dtype=np.float64)
+      point[0,0,0] = arr[0]
+      point[0,0,1] = arr[1]
 
       # Record stylus point in reference space
       mat = vtk.vtkMatrix4x4()
       self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(mat)
       stylusTipPoint = [mat.GetElement(0,3), mat.GetElement(1,3), mat.GetElement(2,3)]
 
-      # transform camera origin (0,0,0) by current camera tracker sensor pose (aka grab translation)
-      self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(mat)
-      cameraOriginInReference = np.asarray([mat.GetElement(0,3), mat.GetElement(1,3), mat.GetElement(2,3)])
+      cameraToReference = vtk.vtkMatrix4x4()
+      self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReference)
 
       # Undistort point according to camera parameters
-      mat = self.cameraIntrinWidget.GetCurrentNode().GetIntrinsicMatrix()
-      pts = self.cameraIntrinWidget.GetCurrentNode().GetDistortionCoefficients()
+      mat = self.cameraSelector.currentNode().GetIntrinsicMatrix()
+      pts = self.cameraSelector.currentNode().GetDistortionCoefficients()
 
       # Convert vtk to numpy
-      mtx = np.asmatrix(np.eye(3, 3, dtype='float64'))
+      mtx = np.asmatrix(np.eye(3, 3, dtype=np.float64))
       for i in range(0, 3):
         for j in range(0, 3):
           mtx[i, j] = mat.GetElement(i,j)
-      dist = np.zeros((1, self.distCoeffsTable.columnCount), dtype='float64')
+      dist = np.asarray(np.zeros((1, pts.GetNumberOfValues()), dtype=np.float64))
       for i in range(0, pts.GetNumberOfValues()):
         dist[0, i] = pts.GetValue(i)
 
+      undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
+      lineInCamera = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
 
-      undistPoint = cv2.undistortPoints(point, mtx, dist)
-      undistPoint = np.asarray([[undistPoint[0][0][0]], [undistPoint[0][0][1]], [1.0]])
+      # Camera ray is vector difference of transformed camera origin point and transformed undistorted clicked point
+      lineInReference =
 
-      # multiply by inverse intrinsics to get point on image plane
-      backProjectedPoint = np.linalg.inv(mtx) * undistPoint
-
-      # camera ray is vector difference of transformed camera origin point and transformed undistorted clicked point
-      backProjectedPointInReference = np.asarray(mat.MultiplyPoint(backProjectedPoint.transpose()))
-      lineInReference = backProjectedPointInReference - cameraOriginInReference
 
       # Store point and line pair
 
