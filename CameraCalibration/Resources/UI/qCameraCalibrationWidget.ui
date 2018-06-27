@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>629</width>
-    <height>838</height>
+    <height>952</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,6 +286,13 @@
           <widget class="QPushButton" name="pushButton_Automatic">
            <property name="text">
             <string>Preview</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_resetPtL">
+           <property name="text">
+            <string>Reset</string>
            </property>
           </widget>
          </item>
@@ -772,9 +779,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qMRMLCameraIntrinsicsWidget</class>
+   <class>qMRMLWebcamIntrinsicsWidget</class>
    <extends>qSlicerWidget</extends>
-   <header>qMRMLCameraIntrinsicsWidget.h</header>
+   <header>qMRMLWebcamIntrinsicsWidget.h</header>
   </customwidget>
   <customwidget>
    <class>ctkCollapsibleButton</class>
@@ -787,11 +794,11 @@
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_CircleGridMethod"/>
+  <buttongroup name="buttonGroup_ProcessMode"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_ProcessMode"/>
  </buttongroups>
 </ui>

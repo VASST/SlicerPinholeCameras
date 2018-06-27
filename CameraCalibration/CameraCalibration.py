@@ -63,6 +63,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.semiAutoModeButton = None
     self.autoButton = None
     self.resetButton = None
+    self.resetPtLButton = None
 
     # Intrinsics
     self.capIntrinsicButton = None
@@ -81,10 +82,12 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.columnsSpinBox = None
     self.rowsSpinBox = None
 
-    # OpenCV vars
     self.objPattern = None
-
     self.sceneObserverTag = None
+    self.tempMarkupNode = None
+    self.cameraOriginInReference = None
+    self.stylusTipInReference = None
+    self.cameraToReference = None
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
@@ -118,6 +121,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.semiAutoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
     self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
     self.autoSettingsContainer = CameraCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
+    self.resetPtLButton = CameraCalibrationWidget.get(self.widget, "pushButton_resetPtL")
 
     # Intrinsic calibration members
     self.capIntrinsicButton = CameraCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
@@ -164,6 +168,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.autoButton.connect('clicked(bool)', self.onAutoButton)
     self.manualModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.connect('clicked(bool)', self.onProcessingModeChanged)
+    self.resetPtLButton.connect('clicked(bool)', self.onResetPtL)
 
     self.adaptiveThresholdButton.connect('clicked(bool)', self.onFlagChanged)
     self.normalizeImageButton.connect('clicked(bool)', self.onFlagChanged)
@@ -201,6 +206,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.manualModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
+    self.resetPtLButton.disconnect('clicked(bool)', self.onResetPtL)
 
     self.adaptiveThresholdButton.disconnect('clicked(bool)', self.onFlagChanged)
     self.normalizeImageButton.disconnect('clicked(bool)', self.onFlagChanged)
@@ -225,7 +231,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       ret = self.logic.findCircleGrid(im)
 
     if ret:
-      self.labelResult.text = "Success (" + str(self.logic.count()) + ")"
+      self.labelResult.text = "Success (" + str(self.logic.countIntrinsics()) + ")"
       done, error, mtx, dist = self.logic.calibrateCamera()
       if done:
         self.cameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
@@ -238,6 +244,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.labelResult.text = "Reset."
     self.cameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3.Identity())
     self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
+
+  def onResetPtL(self):
+    self.logic.resetSensorToCamera()
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -297,40 +306,64 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     if self.manualModeButton.checked:
       self.manualButton.setVisible(True)
       self.semiAutoButton.setVisible(False)
-      self.autoSettingsContainer.setEnabled(False)
+      self.autoButton.setVisible(False)
+      self.autoSettingsContainer.setVisible(False)
     elif self.semiAutoModeButton.checked:
       self.manualButton.setVisible(False)
       self.semiAutoButton.setVisible(True)
-      self.autoSettingsContainer.setEnabled(True)
+      self.autoButton.SetVisible(False)
+      self.autoSettingsContainer.setVisible(True)
     else:
-      self.manualButton.setVisible(True)
-      self.semiAutoButton.setVisible(True)
-      self.autoSettingsContainer.setEnabled(True)
+      self.manualButton.setVisible(False)
+      self.semiAutoButton.setVisible(False)
+      self.autoButton.setVisible(True)
+      self.autoSettingsContainer.setVisible(True)
+
+  def endManualCapturing(self):
+    self.isManualCapturing = False
+    self.manualButton.setText('Capture')
+    # Resume playback
+    slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.centerFiducialSelectionNode.GetID())
+    slicer.mrmlScene.RemoveNode(self.copyNode)
+    self.copyNode = None
+    # Re-enable UI
+    self.inputsContainer.setEnabled(True)
+    self.resetPtLButton.setEnabled(True)
 
   def onManualButton(self):
     if self.isManualCapturing:
       # Cancel button hit
-      slicer.modules.markups.logic().StopPlaceMode()
-      self.inputsContainer.setEnabled(True)
-      self.trackerContainer.setEnabled(True)
-      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.centerFiducialSelectionNode.GetID())
-      self.manualButton.setText('Capture')
+      self.endManualCapturing()
+      slicer.modules.annotations.logic().StopPlaceMode()
       return()
 
     # Make a copy of the volume node (aka freeze cv capture) to allow user to play with detection parameters or click on center
     self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
     self.copyNode = slicer.mrmlScene.CopyNode(self.centerFiducialSelectionNode)
+    imData = vtk.vtkImageData()
+    imData.DeepCopy(self.centerFiducialSelectionNode.GetImageData())
+    self.copyNode.SetAndObserveImageData(imData)
     self.copyNode.SetName('FrozenImage')
-
-    # Set red slice to the copy node
     slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.copyNode.GetID())
 
     # Initiate fiducial selection
     slicer.modules.markups.logic().StartPlaceMode(False)
 
+    # Record tracker data at time of freeze and store
+    mat = vtk.vtkMatrix4x4()
+    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(mat)
+    self.stylusTipInReference = [mat.GetElement(0, 3), mat.GetElement(1, 3), mat.GetElement(2, 3)]
+    cameraToReferenceVtk = vtk.vtkMatrix4x4()
+    self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
+    self.cameraToReference = np.asmatrix(np.eye(4, 4, dtype=np.float64))
+    for i in range(0, 4):
+      for j in range(0, 4):
+        self.cameraToReference[i, j] = cameraToReferenceVtk.GetElement(i, j)
+    self.cameraOriginInReference = [cameraToReferenceVtk.GetElement(0, 3), cameraToReferenceVtk.GetElement(1, 3), cameraToReferenceVtk.GetElement(2, 3)]
+
     # Disable input changing while capture is active
     self.inputsContainer.setEnabled(False)
-    self.trackerContainer.setEnabled(False)
+    self.resetPtLButton.setEnabled(False)
 
     self.isManualCapturing = True
     self.manualButton.setText('Cancel')
@@ -338,25 +371,14 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onNodeAdded(self, caller, event, callData):
     if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing is True:
-      self.isManualCapturing = False
-      slicer.mrmlScene.RemoveNode(self.copyNode)
-      self.copyNode = None
+      self.endManualCapturing()
 
+      # Calculate point and line pair
       arr = [0,0,0]
       callData.GetMarkupPoint(callData.GetNumberOfMarkups()-1, 0, arr)
-      callData.RemoveAllMarkups()
-      slicer.mrmlScene.RemoveNode(callData)
       point = np.zeros((1,1,2),dtype=np.float64)
       point[0,0,0] = arr[0]
       point[0,0,1] = arr[1]
-
-      # Record stylus point in reference space
-      mat = vtk.vtkMatrix4x4()
-      self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(mat)
-      stylusTipPoint = [mat.GetElement(0,3), mat.GetElement(1,3), mat.GetElement(2,3)]
-
-      cameraToReference = vtk.vtkMatrix4x4()
-      self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReference)
 
       # Undistort point according to camera parameters
       mat = self.cameraSelector.currentNode().GetIntrinsicMatrix()
@@ -372,20 +394,42 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
         dist[0, i] = pts.GetValue(i)
 
       undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
-      lineInCamera = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
+      # z = some value > 0
+      # x = (u-cx)*z/fx
+      # y = (v-cy)*z/fy
+
+      z = 1.0
+      x = (undistPoint[0, 0, 0] - mtx[0, 2]) * z / mtx[0, 0]
+      y = (undistPoint[0, 0, 1] - mtx[1, 2]) * z / mtx[1, 1]
+      # Slicer and OpenCV have different image axes (x and y both flipped)
+      # Flip sign of x and y to compensate
+      lineInCamera = np.asarray([[-x],[-y],[z],[1.0]], dtype=np.float64)
 
       # Camera ray is vector difference of transformed camera origin point and transformed undistorted clicked point
-      lineInReference =
-
+      lineInReference = self.cameraToReference * lineInCamera
+      lineInReference = np.asarray([lineInReference[0,0], lineInReference[1,0], lineInReference[2,0]], dtype=np.float64)
+      lineInReference = lineInReference / np.linalg.norm(lineInReference)
 
       # Store point and line pair
+      self.logic.addPointLinePair(self.stylusTipInReference, self.cameraOriginInReference, lineInReference)
+      print "tip=", self.stylusTipInReference
+      print "camera=", self.cameraOriginInReference
+      print "line_ref=", lineInReference
 
-      # Re-enable UI
-      self.inputsContainer.setEnabled(True)
-      self.trackerContainer.setEnabled(True)
+      if self.logic.countSensorToCamera() > 2:
+        result, mat = self.logic.calculateSensorToCamera()
+        print mat
 
-      # Resume playback
-      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.centerFiducialSelectionNode.GetID())
+      # Allow markups module some time to process the new markup, but then quickly delete it
+      # Avoids VTK errors in log
+      self.tempMarkupNode = callData
+      qt.QTimer.singleShot(10, self.removeMarkup)
+
+  def removeMarkup(self):
+    if self.tempMarkupNode is not None:
+      self.tempMarkupNode.RemoveAllMarkups()
+      slicer.mrmlScene.RemoveNode(self.tempMarkupNode)
+      self.tempMarkupNode = None
 
   def onSemiAutoButton(self):
     pass
@@ -406,6 +450,8 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     self.subPixRadius = 5
     self.objPattern = None
     self.terminationCriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
+
+    self.pointToLineRegistrationLogic = slicer.vtkSlicerPointToLineRegistrationLogic()
 
   def setTerminationCriteria(self, criteria):
     self.terminationCriteria = criteria
@@ -476,8 +522,27 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
       return True, ret, mat, pts
     return False
 
-  def count(self):
+  def countIntrinsics(self):
     return len(self.imagePoints)
+
+  def addPointLinePair(self, point, lineOrigin, lineDirection):
+    self.pointToLineRegistrationLogic.AddPointAndLine(point, lineOrigin, lineDirection)
+
+  def calculateSensorToCamera(self):
+    mat = self.pointToLineRegistrationLogic.CalculateRegistration()
+    eye = vtk.vtkMatrix4x4()
+    eye.Identity()
+    for i in range(0, 4):
+      for j in range(0, 4):
+        if mat.GetElement(i,j) != eye.GetElement(i,j):
+          return True, mat
+    return False, mat
+
+  def resetSensorToCamera(self):
+    self.pointToLineRegistrationLogic.Reset()
+
+  def countSensorToCamera(self):
+    return self.pointToLineRegistrationLogic.GetCount()
 
 # CameraCalibrationTest
 class CameraCalibrationTest(ScriptedLoadableModuleTest):

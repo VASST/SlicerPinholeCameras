@@ -38,7 +38,7 @@ public:
   qMRMLWebcamIntrinsicsWidget(QWidget* parent = 0);
   virtual ~qMRMLWebcamIntrinsicsWidget();
 
-  vtkMRMLWebcamNode* GetCurrentNode() const;
+  Q_INVOKABLE vtkMRMLWebcamNode* GetCurrentNode() const;
 
 public slots:
   virtual void setMRMLScene(vtkMRMLScene*);
