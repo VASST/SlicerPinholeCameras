@@ -86,7 +86,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.sceneObserverTag = None
     self.tempMarkupNode = None
     self.cameraOriginInReference = None
-    self.stylusTipInReference = None
+    self.stylusTipToCamera = None
     self.cameraToReference = None
 
   def setup(self):
@@ -352,7 +352,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     # Record tracker data at time of freeze and store
     mat = vtk.vtkMatrix4x4()
     self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(mat)
-    self.stylusTipInReference = [mat.GetElement(0, 3), mat.GetElement(1, 3), mat.GetElement(2, 3)]
+    self.stylusTipToCamera = mat
     cameraToReferenceVtk = vtk.vtkMatrix4x4()
     self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
     self.cameraToReference = np.asmatrix(np.eye(4, 4, dtype=np.float64))
@@ -380,45 +380,46 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       point[0,0,0] = arr[0]
       point[0,0,1] = arr[1]
 
-      # Undistort point according to camera parameters
-      mat = self.cameraSelector.currentNode().GetIntrinsicMatrix()
-      pts = self.cameraSelector.currentNode().GetDistortionCoefficients()
-
+      # Get camera parameters
       # Convert vtk to numpy
       mtx = np.asmatrix(np.eye(3, 3, dtype=np.float64))
       for i in range(0, 3):
         for j in range(0, 3):
-          mtx[i, j] = mat.GetElement(i,j)
-      dist = np.asarray(np.zeros((1, pts.GetNumberOfValues()), dtype=np.float64))
-      for i in range(0, pts.GetNumberOfValues()):
-        dist[0, i] = pts.GetValue(i)
+          mtx[i, j] = self.cameraSelector.currentNode().GetIntrinsicMatrix().GetElement(i,j)
 
+      dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+      for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+        dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+
+      x = [self.stylusTipToCamera.GetElement(0, 3), self.stylusTipToCamera.GetElement(1, 3), self.stylusTipToCamera.GetElement(2, 3)]
+
+      # Origin - always 0, 0, 0
+      origin = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
+
+      # Calculate the direction vector for the given pixel (after undistortion)
       undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
-      # z = some value > 0
-      # x = (u-cx)*z/fx
-      # y = (v-cy)*z/fy
+      pixel = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
 
-      z = 1.0
-      x = (undistPoint[0, 0, 0] - mtx[0, 2]) * z / mtx[0, 0]
-      y = (undistPoint[0, 0, 1] - mtx[1, 2]) * z / mtx[1, 1]
-      # Slicer and OpenCV have different image axes (x and y both flipped)
-      # Flip sign of x and y to compensate
-      lineInCamera = np.asarray([[-x],[-y],[z],[1.0]], dtype=np.float64)
+      # Find the inverse of the camera intrinsic param matrix
+      # Calculate direction vector  by multiplying the inverse of the
+      # intrinsic param matrix by the pixel
+      directionVec = np.linalg.inv(mtx) * pixel
 
-      # Camera ray is vector difference of transformed camera origin point and transformed undistorted clicked point
-      lineInReference = self.cameraToReference * lineInCamera
-      lineInReference = np.asarray([lineInReference[0,0], lineInReference[1,0], lineInReference[2,0]], dtype=np.float64)
-      lineInReference = lineInReference / np.linalg.norm(lineInReference)
+      # Normalize the direction vector
+      directionVecNormalized = directionVec / np.linalg.norm(directionVec)
 
-      # Store point and line pair
-      self.logic.addPointLinePair(self.stylusTipInReference, self.cameraOriginInReference, lineInReference)
-      print "tip=", self.stylusTipInReference
-      print "camera=", self.cameraOriginInReference
-      print "line_ref=", lineInReference
+      print "dirvec: ", directionVecNormalized
+
+      # And add it to the list!
+      self.logic.addPointLinePair(x, origin, directionVecNormalized)
 
       if self.logic.countSensorToCamera() > 2:
-        result, mat = self.logic.calculateSensorToCamera()
-        print mat
+        result, p2l = self.logic.calculateSensorToCamera()
+        if result:
+          print "camera2sensor: ", p2l
+          # see if points line up
+          # project x to sensor coord system and see if pixel lines up with point (or undistpoint)
+
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
