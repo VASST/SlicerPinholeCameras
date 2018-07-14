@@ -52,6 +52,11 @@ vtkMRMLWebcamNode::~vtkMRMLWebcamNode()
     this->DistortionCoefficients->RemoveAllObservers();
     this->DistortionCoefficients->Delete();
   }
+  if (this->MarkerToSensorTransform != NULL)
+  {
+    this->MarkerToSensorTransform->RemoveAllObservers();
+    this->MarkerToSensorTransform->Delete();
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -63,6 +68,7 @@ void vtkMRMLWebcamNode::Copy(vtkMRMLNode* anode)
 
   this->SetAndObserveIntrinsicMatrix(node->GetIntrinsicMatrix());
   this->SetAndObserveDistortionCoefficients(node->GetDistortionCoefficients());
+  this->SetAndObserveMarkerToSensorTransform(node->GetMarkerToSensorTransform());
 
   this->EndModify(disabledModify);
 }
@@ -93,9 +99,25 @@ void vtkMRMLWebcamNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* dist
 
   this->SetDistortionCoefficients(distCoeffs);
 
-  if (this->IntrinsicMatrix != NULL)
+  if (this->DistortionCoefficients != NULL)
   {
     this->DistortionCoefficientsObserverTag = this->DistortionCoefficients->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnDistortionCoefficientsModified);
+  }
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLWebcamNode::SetAndObserveMarkerToSensorTransform(vtkMatrix4x4* markerToImageTransform)
+{
+  if (this->MarkerToSensorTransform != NULL)
+  {
+    this->MarkerToSensorTransform->RemoveObserver(this->MarkerTransformObserverTag);
+  }
+
+  this->SetMarkerToSensorTransform(markerToImageTransform);
+
+  if (this->MarkerToSensorTransform != NULL)
+  {
+    this->MarkerTransformObserverTag = this->MarkerToSensorTransform->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnMarkerTransformModified);
   }
 }
 
@@ -120,6 +142,13 @@ void vtkMRMLWebcamNode::OnDistortionCoefficientsModified(vtkObject* caller, unsi
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLWebcamNode::OnMarkerTransformModified(vtkObject* caller, unsigned long event, void* data)
+{
+  this->InvokeEvent(MarkerToSensorTransformModifiedEvent);
+  this->Modified();
+}
+
+//----------------------------------------------------------------------------
 void vtkMRMLWebcamNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   Superclass::PrintSelf(os, indent);
@@ -128,4 +157,6 @@ void vtkMRMLWebcamNode::PrintSelf(ostream& os, vtkIndent indent)
   this->IntrinsicMatrix->PrintSelf(os, indent);
   os << "Distortion Coefficients: " << std::endl;
   this->DistortionCoefficients->PrintSelf(os, indent);
+  os << "MarkerToSensor Transform: " << std::endl;
+  this->MarkerToSensorTransform->PrintSelf(os, indent);
 }

@@ -10,7 +10,7 @@ class CameraCalibration(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Calibration"
     self.parent.categories = ["Webcams"]
-    self.parent.dependencies = []
+    self.parent.dependencies = ["PointToLineRegistration", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """Perform intrinsic and extrinsic camera calibration against an external tracker."""
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
@@ -30,10 +30,36 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
           return resulting_widget
       return None
 
+  @staticmethod
+  def vtk4x4tonumpy(vtk4x4):
+    if vtk4x4 is None:
+      return
+
+    val = np.asmatrix(np.eye(4, 4, dtype=np.float64))
+    for i in range(0, 4):
+      for j in range(0, 4):
+        val[i, j] = vtk4x4.GetElement(i, j)
+
+    return val
+
+  @staticmethod
+  def vtk3x3tonumpy(vtk3x3):
+    if vtk3x3 is None:
+      return
+
+    val = np.asmatrix(np.eye(3, 3, dtype=np.float64))
+    for i in range(0, 3):
+      for j in range(0, 3):
+        val[i, j] = vtk3x3.GetElement(i, j)
+
+    return val
+
   def __init__(self, parent):
     ScriptedLoadableModuleWidget.__init__(self, parent)
 
     self.logic = CameraCalibrationLogic()
+
+    self.debugMode = False
 
     self.isManualCapturing = False
 
@@ -50,10 +76,11 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.intrinsicsContainer = None
     self.autoSettingsContainer = None
 
-    # Inputs
+    # Inputs/Outputs
     self.imageSelector = None
     self.cameraTransformSelector = None
     self.stylusTipTransformSelector = None
+    self.outputTransformSelector = None
 
     # Tracker
     self.manualButton = None
@@ -64,6 +91,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.autoButton = None
     self.resetButton = None
     self.resetPtLButton = None
+    self.trackerResultsLabel = None
+    self.captureCountSpinBox = None
 
     # Intrinsics
     self.capIntrinsicButton = None
@@ -105,10 +134,11 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     # Workaround for camera selector
     self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
 
-    # Inputs
+    # Inputs/Outputs
     self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
     self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
     self.stylusTipTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_StylusTipSelector")
+    self.outputTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_OutputTransform")
 
     # Tracker calibration members
     self.inputsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
@@ -122,6 +152,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
     self.autoSettingsContainer = CameraCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
     self.resetPtLButton = CameraCalibrationWidget.get(self.widget, "pushButton_resetPtL")
+    self.trackerResultsLabel = CameraCalibrationWidget.get(self.widget, "label_TrackerResultsValue")
+    self.captureCountSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_captureCount")
 
     # Intrinsic calibration members
     self.capIntrinsicButton = CameraCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
@@ -149,11 +181,13 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.imageSelector.setMRMLScene(slicer.mrmlScene)
     self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
     self.stylusTipTransformSelector.setMRMLScene(slicer.mrmlScene)
+    self.outputTransformSelector.setMRMLScene(slicer.mrmlScene)
 
     # Inputs
     self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
     self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.stylusTipTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.outputTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     # Connections
     self.capIntrinsicButton.connect('clicked(bool)', self.onIntrinsicCapture)
@@ -162,6 +196,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.intrinsicCircleGridButton.connect('clicked(bool)', self.onIntrinsicModeChanged)
     self.rowsSpinBox.connect('valueChanged(int)', self.onPatternChanged)
     self.columnsSpinBox.connect('valueChanged(int)', self.onPatternChanged)
+    self.captureCountSpinBox.connect('valueChanged(int)', self.onCaptureCountChanged)
 
     self.manualButton.connect('clicked(bool)', self.onManualButton)
     self.semiAutoButton.connect('clicked(bool)', self.onSemiAutoButton)
@@ -198,12 +233,16 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.intrinsicCircleGridButton.disconnect('clicked(bool)', self.onIntrinsicModeChanged)
     self.rowsSpinBox.disconnect('valueChanged(int)', self.onPatternChanged)
     self.columnsSpinBox.disconnect('valueChanged(int)', self.onPatternChanged)
+    self.captureCountSpinBox.disconnect('valueChanged(int)', self.onCaptureCountChanged)
+
+    self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
+    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.stylusTipTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.outputTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     self.manualButton.disconnect('clicked(bool)', self.onManualButton)
     self.semiAutoButton.disconnect('clicked(bool)', self.onSemiAutoButton)
     self.autoButton.disconnect('clicked(bool)', self.onAutoButton)
-    self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.manualModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
     self.autoModeButton.disconnect('clicked(bool)', self.onProcessingModeChanged)
     self.resetPtLButton.disconnect('clicked(bool)', self.onResetPtL)
@@ -246,7 +285,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
 
   def onResetPtL(self):
-    self.logic.resetSensorToCamera()
+    self.logic.resetCameraToSensor()
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -254,6 +293,19 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().FitSliceToAll()
     self.onSelect()
+
+  def onCaptureCountChanged(self):
+    countString = str(self.logic.countCameraToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
+    string = ""
+    result = False
+
+    if self.logic.countCameraToSensor() >= self.captureCountSpinBox.value:
+      result, cameraToSensor, string = self.calcRegAndBuildString()
+
+    if result:
+      self.trackerResultsLabel.text = countString + " " + string
+    else:
+      self.trackerResultsLabel.text = countString
 
   def onFlagChanged(self):
     flags = 0
@@ -298,9 +350,17 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.clusteringButton.enabled = True
 
   def onSelect(self):
-    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None and self.cameraSelector.currentNode() is not None
-    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None and self.cameraSelector.currentNode() is not None
-    self.trackerContainer.enabled = self.imageSelector.currentNode() and self.cameraTransformSelector.currentNode() and self.stylusTipTransformSelector.currentNode() and self.cameraSelector.currentNode() is not None
+    self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None \
+                                      and self.cameraSelector.currentNode() is not None
+
+    self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None \
+                                       and self.cameraSelector.currentNode() is not None
+
+    self.trackerContainer.enabled = self.imageSelector.currentNode() is not None \
+                                    and self.cameraTransformSelector.currentNode() is not None \
+                                    and self.stylusTipTransformSelector.currentNode() is not None \
+                                    and self.cameraSelector.currentNode() is not None \
+                                    and self.outputTransformSelector.currentNode() is not None
 
   def onProcessingModeChanged(self):
     if self.manualModeButton.checked:
@@ -355,10 +415,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.stylusTipToCamera = mat
     cameraToReferenceVtk = vtk.vtkMatrix4x4()
     self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
-    self.cameraToReference = np.asmatrix(np.eye(4, 4, dtype=np.float64))
-    for i in range(0, 4):
-      for j in range(0, 4):
-        self.cameraToReference[i, j] = cameraToReferenceVtk.GetElement(i, j)
+    self.cameraToReference = CameraCalibrationWidget.vtk4x4tonumpy(cameraToReferenceVtk)
     self.cameraOriginInReference = [cameraToReferenceVtk.GetElement(0, 3), cameraToReferenceVtk.GetElement(1, 3), cameraToReferenceVtk.GetElement(2, 3)]
 
     # Disable input changing while capture is active
@@ -370,7 +427,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onNodeAdded(self, caller, event, callData):
-    if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing is True:
+    if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing:
       self.endManualCapturing()
 
       # Calculate point and line pair
@@ -382,10 +439,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       # Get camera parameters
       # Convert vtk to numpy
-      mtx = np.asmatrix(np.eye(3, 3, dtype=np.float64))
-      for i in range(0, 3):
-        for j in range(0, 3):
-          mtx[i, j] = self.cameraSelector.currentNode().GetIntrinsicMatrix().GetElement(i,j)
+      mtx = CameraCalibrationWidget.vtk3x3tonumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
 
       dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
       for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
@@ -408,23 +462,54 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # Normalize the direction vector
       directionVecNormalized = directionVec / np.linalg.norm(directionVec)
 
-      print "dirvec: ", directionVecNormalized
-
       # And add it to the list!
       self.logic.addPointLinePair(x, origin, directionVecNormalized)
 
-      if self.logic.countSensorToCamera() > 2:
-        result, p2l = self.logic.calculateSensorToCamera()
-        if result:
-          print "camera2sensor: ", p2l
-          # see if points line up
-          # project x to sensor coord system and see if pixel lines up with point (or undistpoint)
+      countString = str(self.logic.countCameraToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
 
+      if self.logic.countCameraToSensor() >= self.captureCountSpinBox.value:
+        result, cameraToSensor, string = self.calcRegAndBuildString()
+        if result and self.debugMode:
+          trans = vtk.vtkTransform()
+          trans.PostMultiply()
+          trans.Identity()
+          trans.Concatenate(self.stylusTipToCamera)
+          trans.Concatenate(cameraToSensor)
+
+          posePosition = trans.GetPosition()
+
+          xPrime = posePosition[0] / posePosition[2]
+          yPrime = posePosition[1] / posePosition[2]
+
+          u = (mtx[0, 0] * xPrime) + mtx[0, 2];
+          v = (mtx[1, 1] * yPrime) + mtx[1, 2];
+
+          print "undistPoint: ", undistPoint[0, 0, 0], ",", undistPoint[0, 0, 1]
+          print "u,v: ", u, ",", v
+        self.trackerResultsLabel.text = countString + " " + string
+      else:
+        self.trackerResultsLabel.text = countString
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
       self.tempMarkupNode = callData
       qt.QTimer.singleShot(10, self.removeMarkup)
+
+  def calcRegAndBuildString(self):
+    mtx = CameraCalibrationWidget.vtk3x3tonumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
+
+    result, cameraToSensor = self.logic.calculateCameraToSensor()
+    string = ""
+
+    if result:
+      self.outputTransformSelector.currentNode().SetMatrixTransformToParent(cameraToSensor)
+      self.cameraSelector.currentNode().SetAndObserveMarkerToSensorTransform(cameraToSensor)
+
+      string = "Registration complete. Error: " + str(self.logic.getErrorCameraToSensor())
+    else:
+      string = "Registration failed."
+
+    return result, cameraToSensor, string
 
   def removeMarkup(self):
     if self.tempMarkupNode is not None:
@@ -502,7 +587,7 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
     ret, centers = cv2.findCirclesGrid(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
 
-    if ret == True:
+    if ret:
       self.objectPoints.append(self.objPattern)
       self.imagePoints.append(centers)
       self.calibrateCamera()
@@ -529,7 +614,7 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
   def addPointLinePair(self, point, lineOrigin, lineDirection):
     self.pointToLineRegistrationLogic.AddPointAndLine(point, lineOrigin, lineDirection)
 
-  def calculateSensorToCamera(self):
+  def calculateCameraToSensor(self):
     mat = self.pointToLineRegistrationLogic.CalculateRegistration()
     eye = vtk.vtkMatrix4x4()
     eye.Identity()
@@ -539,11 +624,14 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
           return True, mat
     return False, mat
 
-  def resetSensorToCamera(self):
+  def resetCameraToSensor(self):
     self.pointToLineRegistrationLogic.Reset()
 
-  def countSensorToCamera(self):
+  def countCameraToSensor(self):
     return self.pointToLineRegistrationLogic.GetCount()
+
+  def getErrorCameraToSensor(self):
+    return self.pointToLineRegistrationLogic.GetError()
 
 # CameraCalibrationTest
 class CameraCalibrationTest(ScriptedLoadableModuleTest):

@@ -22,8 +22,9 @@ Version:   $Revision: 1.0 $
 #include <vtkMRMLStorableNode.h>
 
 // VTK includes
-#include <vtkMatrix3x3.h>
 #include <vtkDoubleArray.h>
+#include <vtkMatrix3x3.h>
+#include <vtkMatrix4x4.h>
 
 class VTK_SLICER_WEBCAMS_MODULE_MRML_EXPORT vtkMRMLWebcamNode : public vtkMRMLStorableNode
 {
@@ -31,7 +32,8 @@ public:
   enum
   {
     IntrinsicsModifiedEvent = 404001,
-    DistortionCoefficientsModifiedEvent
+    DistortionCoefficientsModifiedEvent,
+    MarkerToSensorTransformModifiedEvent
   };
 
 public:
@@ -57,17 +59,23 @@ public:
   vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   void SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs);
 
+  vtkGetObjectMacro(MarkerToSensorTransform, vtkMatrix4x4);
+  void SetAndObserveMarkerToSensorTransform(vtkMatrix4x4* markerToSensorTransform);
+
   virtual vtkMRMLStorageNode* CreateDefaultStorageNode() VTK_OVERRIDE;
 
 protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   vtkSetObjectMacro(DistortionCoefficients, vtkDoubleArray);
+  vtkSetObjectMacro(MarkerToSensorTransform, vtkMatrix4x4);
 
   unsigned long IntrinsicObserverObserverTag;
   unsigned long DistortionCoefficientsObserverTag;
+  unsigned long MarkerTransformObserverTag;
 
   void OnIntrinsicsModified(vtkObject* caller, unsigned long event, void* data);
   void OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
+  void OnMarkerTransformModified(vtkObject* caller, unsigned long event, void* data);
 
 protected:
   vtkMRMLWebcamNode();
@@ -77,6 +85,8 @@ protected:
 
   vtkMatrix3x3*       IntrinsicMatrix;
   vtkDoubleArray*     DistortionCoefficients;
+
+  vtkMatrix4x4*       MarkerToSensorTransform;
 };
 
 #endif

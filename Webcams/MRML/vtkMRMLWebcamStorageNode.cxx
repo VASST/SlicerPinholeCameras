@@ -88,10 +88,11 @@ int vtkMRMLWebcamStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
 
   cv::Mat intrinMat;
   cv::Mat distCoeffs;
+  cv::Mat markerToSensor;
   cv::FileNode intrinNode = fs["IntrinsicMatrix"];
   if (intrinNode.empty())
   {
-    vtkErrorMacro("Intrinsics file does not contain IntrinsicMatrix cv::Mat.");
+    vtkErrorMacro("Camera file does not contain IntrinsicMatrix cv::Mat.");
     return 0;
   }
   intrinNode >> intrinMat;
@@ -99,13 +100,22 @@ int vtkMRMLWebcamStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   cv::FileNode distCoeffsNode = fs["DistortionCoefficients"];
   if (distCoeffsNode.empty())
   {
-    vtkErrorMacro("Intrinsics file does not contain DistortionCoefficients cv::Mat.");
+    vtkErrorMacro("Camera file does not contain DistortionCoefficients cv::Mat.");
     return 0;
   }
   distCoeffsNode >> distCoeffs;
 
+  cv::FileNode markerToSensorNode = fs["MarkerToSensor"];
+  if (markerToSensorNode.empty())
+  {
+    vtkErrorMacro("Camera file does not contain MarkerToSensor cv::Mat.");
+    return 0;
+  }
+  markerToSensorNode >> markerToSensor;
+
   intrinMat.convertTo(intrinMat, CV_64F);
   distCoeffs.convertTo(distCoeffs, CV_64F);
+  markerToSensor.convertTo(markerToSensor, CV_64F);
 
   vtkNew<vtkMatrix3x3> mat;
   for (int i = 0; i < 3; ++i)
@@ -120,9 +130,18 @@ int vtkMRMLWebcamStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   {
     array->InsertNextValue(distCoeffs.at<double>(i, 0));
   }
+  vtkNew<vtkMatrix4x4> markToSensor;
+  for (int i = 0; i < 4; ++i)
+  {
+    for (int j = 0; j < 4; ++j)
+    {
+      markToSensor->SetElement(i, j, markerToSensor.at<double>(i, j));
+    }
+  }
 
   cameraNode->SetAndObserveIntrinsicMatrix(mat);
   cameraNode->SetAndObserveDistortionCoefficients(array);
+  cameraNode->SetAndObserveMarkerToSensorTransform(markToSensor);
 
   return 1;
 }
@@ -156,7 +175,6 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
   else
   {
     cv::Mat intrinMat(3, 3, CV_64F);
-    vtkNew<vtkMatrix3x3> mat;
     for (int i = 0; i < 3; ++i)
     {
       for (int j = 0; j < 3; ++j)
@@ -179,6 +197,23 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
       distCoeffs.at<double>(i, 0) = node->GetDistortionCoefficients()->GetValue(i);
     }
     fs << "DistortionCoefficients" << distCoeffs;
+  }
+
+  if (node->GetMarkerToSensorTransform() == NULL)
+  {
+    vtkInfoMacro("MarkerToSensor matrix has not been determined for this camera.");
+  }
+  else
+  {
+    cv::Mat mat(4, 4, CV_64F);
+    for (int i = 0; i < 4; ++i)
+    {
+      for (int j = 0; j < 4; ++j)
+      {
+        mat.at<double>(i, j) = node->GetMarkerToSensorTransform()->GetElement(i, j);
+      }
+    }
+    fs << "MarkerToSensor" << mat;
   }
 
   return 1;
