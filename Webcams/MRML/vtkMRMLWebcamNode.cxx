@@ -35,6 +35,7 @@ vtkMRMLWebcamNode::vtkMRMLWebcamNode()
   : vtkMRMLStorableNode()
   , IntrinsicMatrix(nullptr)
   , DistortionCoefficients(nullptr)
+  , MarkerToImageSensorTransform(nullptr)
 {
 
 }
@@ -52,10 +53,10 @@ vtkMRMLWebcamNode::~vtkMRMLWebcamNode()
     this->DistortionCoefficients->RemoveAllObservers();
     this->DistortionCoefficients->Delete();
   }
-  if (this->MarkerToSensorTransform != NULL)
+  if (this->MarkerToImageSensorTransform != NULL)
   {
-    this->MarkerToSensorTransform->RemoveAllObservers();
-    this->MarkerToSensorTransform->Delete();
+    this->MarkerToImageSensorTransform->RemoveAllObservers();
+    this->MarkerToImageSensorTransform->Delete();
   }
 }
 
@@ -68,7 +69,7 @@ void vtkMRMLWebcamNode::Copy(vtkMRMLNode* anode)
 
   this->SetAndObserveIntrinsicMatrix(node->GetIntrinsicMatrix());
   this->SetAndObserveDistortionCoefficients(node->GetDistortionCoefficients());
-  this->SetAndObserveMarkerToSensorTransform(node->GetMarkerToSensorTransform());
+  this->SetAndObserveMarkerToImageSensorTransform(node->GetMarkerToImageSensorTransform());
 
   this->EndModify(disabledModify);
 }
@@ -106,18 +107,18 @@ void vtkMRMLWebcamNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* dist
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLWebcamNode::SetAndObserveMarkerToSensorTransform(vtkMatrix4x4* markerToImageTransform)
+void vtkMRMLWebcamNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform)
 {
-  if (this->MarkerToSensorTransform != NULL)
+  if (this->MarkerToImageSensorTransform != NULL)
   {
-    this->MarkerToSensorTransform->RemoveObserver(this->MarkerTransformObserverTag);
+    this->MarkerToImageSensorTransform->RemoveObserver(this->MarkerTransformObserverTag);
   }
 
-  this->SetMarkerToSensorTransform(markerToImageTransform);
+  this->SetMarkerToImageSensorTransform(markerToImageSensorTransform);
 
-  if (this->MarkerToSensorTransform != NULL)
+  if (this->MarkerToImageSensorTransform != NULL)
   {
-    this->MarkerTransformObserverTag = this->MarkerToSensorTransform->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnMarkerTransformModified);
+    this->MarkerTransformObserverTag = this->MarkerToImageSensorTransform->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnMarkerTransformModified);
   }
 }
 
@@ -158,5 +159,5 @@ void vtkMRMLWebcamNode::PrintSelf(ostream& os, vtkIndent indent)
   os << "Distortion Coefficients: " << std::endl;
   this->DistortionCoefficients->PrintSelf(os, indent);
   os << "MarkerToSensor Transform: " << std::endl;
-  this->MarkerToSensorTransform->PrintSelf(os, indent);
+  this->MarkerToImageSensorTransform->PrintSelf(os, indent);
 }

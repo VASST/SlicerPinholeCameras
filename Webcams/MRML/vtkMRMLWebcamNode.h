@@ -59,15 +59,15 @@ public:
   vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   void SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs);
 
-  vtkGetObjectMacro(MarkerToSensorTransform, vtkMatrix4x4);
-  void SetAndObserveMarkerToSensorTransform(vtkMatrix4x4* markerToSensorTransform);
+  vtkGetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
+  void SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform);
 
   virtual vtkMRMLStorageNode* CreateDefaultStorageNode() VTK_OVERRIDE;
 
 protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   vtkSetObjectMacro(DistortionCoefficients, vtkDoubleArray);
-  vtkSetObjectMacro(MarkerToSensorTransform, vtkMatrix4x4);
+  vtkSetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
 
   unsigned long IntrinsicObserverObserverTag;
   unsigned long DistortionCoefficientsObserverTag;
@@ -86,7 +86,7 @@ protected:
   vtkMatrix3x3*       IntrinsicMatrix;
   vtkDoubleArray*     DistortionCoefficients;
 
-  vtkMatrix4x4*       MarkerToSensorTransform;
+  vtkMatrix4x4*       MarkerToImageSensorTransform;
 };
 
 #endif

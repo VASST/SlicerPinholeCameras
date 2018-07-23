@@ -1,20 +1,21 @@
 import os
-import unittest
-import vtk, qt, ctk, slicer
-from slicer.ScriptedLoadableModule import *
-import logging
+import vtk
+import qt
+import slicer
 import numpy as np
-import cv2
+import logging
+from slicer.ScriptedLoadableModule import ScriptedLoadableModule, ScriptedLoadableModuleWidget, ScriptedLoadableModuleLogic, ScriptedLoadableModuleTest
+
+try:
+  import cv2
+  OPENCV2_AVAILABLE = True
+except ImportError:
+  OPENCV2_AVAILABLE = False
 
 #
 # CameraRayIntersection
 #
-
 class CameraRayIntersection(ScriptedLoadableModule):
-  """Uses ScriptedLoadableModule base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
-
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Camera Ray Intersection"
@@ -28,11 +29,7 @@ class CameraRayIntersection(ScriptedLoadableModule):
 #
 # CameraRayIntersectionWidget
 #
-
 class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
-  """Uses ScriptedLoadableModuleWidget base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
   @staticmethod
   def get(widget, objectName):
     if widget.objectName == objectName:
@@ -73,8 +70,9 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.logic = CameraRayIntersectionLogic()
 
     self.debugMode = False
-
+    self.canSelectFiducials = False
     self.isManualCapturing = False
+    self.validCamera = False
 
     self.centerFiducialSelectionNode = None
     self.copyNode = None
@@ -103,62 +101,102 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
-    # Load the UI From file
-    scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
-    scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-    path = os.path.join(scriptedModulesPath, 'Resources', 'UI', 'q' + self.moduleName + 'Widget.ui')
-    self.widget = slicer.util.loadUI(path)
-    self.layout.addWidget(self.widget)
+    if not OPENCV2_AVAILABLE:
+      self.layout.addWidget(qt.QLabel("OpenCV2 python is required and not available. Check installation/configuration of SlicerOpenCV."))
+    else:
+      # Load the UI From file
+      scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
+      scriptedModulesPath = os.path.dirname(scriptedModulesPath)
+      path = os.path.join(scriptedModulesPath, 'Resources', 'UI', 'q' + self.moduleName + 'Widget.ui')
+      self.widget = slicer.util.loadUI(path)
+      self.layout.addWidget(self.widget)
 
-    self.cameraIntrinWidget = CameraRayIntersectionWidget.get(self.widget, "cameraIntrinsicsWidget")
+      self.cameraIntrinWidget = CameraRayIntersectionWidget.get(self.widget, "cameraIntrinsicsWidget")
 
-    # Workaround for camera selector
-    self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
+      # Workaround for camera selector
+      self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
 
-    # Inputs/Outputs
-    self.imageSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_ImageSelector")
-    self.cameraTransformSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_CameraTransform")
-    self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
+      # Inputs/Outputs
+      self.imageSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_ImageSelector")
+      self.cameraTransformSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_CameraTransform")
+      self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
 
-    self.captureButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Capture")
-    self.resetButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Reset")
-    self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
+      self.captureButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Capture")
+      self.resetButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Reset")
+      self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
 
-    self.resultsLabel = CameraRayIntersectionWidget.get(self.widget, "label_Results")
+      self.resultsLabel = CameraRayIntersectionWidget.get(self.widget, "label_Results")
 
-    # Disable capture as image processing isn't active yet
-    self.actionContainer.setEnabled(False)
+      # Disable capture as image processing isn't active yet
+      self.actionContainer.setEnabled(False)
 
-    # UI file method does not do mrml scene connections, do them manually
-    self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
-    self.imageSelector.setMRMLScene(slicer.mrmlScene)
-    self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
+      # UI file method does not do mrml scene connections, do them manually
+      self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
+      self.imageSelector.setMRMLScene(slicer.mrmlScene)
+      self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
 
-    # Connections
-    self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.outputTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.captureButton.connect('clicked(bool)', self.onCapture)
-    self.resetButton.connect('clicked(bool)', self.onReset)
+      # Connections
+      self.cameraSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
+      self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
+      self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+      self.captureButton.connect('clicked(bool)', self.onCapture)
+      self.resetButton.connect('clicked(bool)', self.onReset)
 
-    # Adding an observer to scene to listen for mrml node
-    self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
+      # Adding an observer to scene to listen for mrml node
+      self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
 
-    # Choose red slice only
-    lm = slicer.app.layoutManager()
-    lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
+      # Choose red slice only
+      lm = slicer.app.layoutManager()
+      lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
 
-    # Refresh Apply button state
-    self.onSelect()
+      # Refresh Apply button state
+      self.onSelect()
+
+  def onCameraSelected(self):
+    node = self.cameraSelector.currentNode()
+    if node is not None:
+      string = ""
+      # Check state of selected camera
+      if node.GetIntrinsicMatrix() is None:
+        string += "No camera intrinsics! "
+      if node.GetDistortionCoefficients() is None:
+        string += "No distortion coefficients! "
+      if node.GetMarkerToImageSensorTransform() is None:
+        string += "No tracker calibration performed! "
+
+      if len(string) > 0:
+        self.resultsLabel.text = string
+        logging.error(string)
+        self.validCamera = False
+      else:
+        self.validCamera = True
 
   def cleanup(self):
+    self.cameraSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
     self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
     self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.outputTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.captureButton.disconnect('clicked(bool)', self.onCapture)
     self.resetButton.disconnect('clicked(bool)', self.onReset)
 
     slicer.mrmlScene.RemoveObserver(self.sceneObserverTag)
+
+  def onImageSelected(self):
+    # Set red slice to the copy node
+    if self.imageSelector.currentNode() is not None:
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().FitSliceToAll()
+
+      # Check pixel spacing, x and y must be 1px = 1mm in order for markups to produce correct pixel locations
+      spacing = self.imageSelector.currentNode().GetImageData().GetSpacing()
+      if spacing[0] != 1.0 or spacing[1] != 0:
+        message = "Image does not have 1.0 spacing in x or y, markup fiducials will not represent pixels exactly!"
+        logging.error(message)
+        self.resultsLabel = message
+        self.canSelectFiducials = False
+      else:
+        self.canSelectFiducials = True
+
+    self.onSelect()
 
   def onReset(self):
     self.labelResult.text = "Reset."
@@ -167,20 +205,22 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
   def onSelect(self):
     self.actionContainer.enabled = self.imageSelector.currentNode() \
                                    and self.cameraTransformSelector.currentNode() \
-                                   and self.cameraSelector.currentNode()
+                                   and self.cameraSelector.currentNode() \
+                                   and self.canSelectFiducials \
+                                   and self.validCamera
 
   def onCapture(self):
-    # Set red slice to the copy node
-    if self.imageSelector.currentNode() is not None:
-      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
-      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().FitSliceToAll()
-    self.onSelect()
-
     if self.isManualCapturing:
       # Cancel button hit
       self.endManualCapturing()
       slicer.modules.annotations.logic().StopPlaceMode()
       return()
+
+    # Reset view so that capture button always works
+    if self.imageSelector.currentNode() is not None:
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
+      slicer.app.layoutManager().sliceWidget('Red').sliceLogic().FitSliceToAll()
+    self.onSelect()
 
     # Make a copy of the volume node (aka freeze cv capture) to allow user to play with detection parameters or click on center
     self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
@@ -214,30 +254,32 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       arr = [0,0,0]
       callData.GetMarkupPoint(callData.GetNumberOfMarkups()-1, 0, arr)
       point = np.zeros((1,1,2),dtype=np.float64)
-      point[0,0,0] = arr[0]
-      point[0,0,1] = arr[1]
+      point[0,0,0] = abs(arr[0])
+      point[0,0,1] = abs(arr[1])
 
       # Get camera parameters
       mtx = CameraRayIntersectionWidget.vtk3x3tonumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
 
-      dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-      for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-        dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      if self.cameraSelector.currentNode().GetDistortionCoefficients() is not None:
+        dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+        for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+          dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      else:
+        dist = np.asarray([], dtype=np.float64)
 
       # Calculate the direction vector for the given pixel (after undistortion)
       undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
       pixel = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
 
-      # Find the inverse of the camera intrinsic param matrix
-      # Calculate direction vector  by multiplying the inverse of the
-      # intrinsic param matrix by the pixel
-      directionVec = np.linalg.inv(mtx) * pixel
+      # Get the direction based on selected pixel
+      origin_sensor = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
+      directionVec_sensor = np.linalg.inv(mtx) * pixel
 
       # Normalize the direction vector
-      origin = [0,0,0]
-      directionVecNormalized = directionVec / np.linalg.norm(directionVec)
+      directionVecNormalized_sensor = directionVec_sensor / np.linalg.norm(directionVec_sensor)
 
-      # TODO: stuff
+
+      # left multiply by marker to imagesensor^-1, then marker to reference
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log

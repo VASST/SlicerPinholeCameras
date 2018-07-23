@@ -50,12 +50,14 @@ protected slots:
   void onWebcamSelectorChanged(vtkMRMLNode* newNode);
   void onIntrinsicItemChanged(QTableWidgetItem* item);
   void onDistortionItemChanged(QTableWidgetItem* item);
+  void onMarkerTransformItemChanged(QTableWidgetItem* item);
 
 protected:
   virtual void setup();
 
   void OnNodeIntrinsicsModified(vtkObject* caller, unsigned long event, void* data);
   void OnNodeDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
+  void OnNodeMarkerTransformModified(vtkObject* caller, unsigned long event, void* data);
 
   void SetCurrentNode(vtkMRMLWebcamNode* newNode);
 
@@ -65,6 +67,7 @@ protected:
 
   unsigned long IntrinsicObserverTag;
   unsigned long DistortionObserverTag;
+  unsigned long MarkerTransformObserverTag;
 
 private:
   Q_DECLARE_PRIVATE(qMRMLWebcamIntrinsicsWidget);

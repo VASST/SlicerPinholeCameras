@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>525</width>
+    <width>546</width>
     <height>319</height>
    </rect>
   </property>
@@ -52,6 +52,8 @@
    <header>qMRMLWebcamIntrinsicsWidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../qSlicerWebcamsModule.qrc"/>
+ </resources>
  <connections/>
 </ui>

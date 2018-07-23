@@ -13,6 +13,7 @@ Version:   $Revision: 1.0 $
 =========================================================================auto=*/
 
 // Qt includes
+#include <QAction>
 #include <QClipboard>
 #include <QDebug>
 
@@ -42,6 +43,28 @@ namespace
     for (int i = 0; i < 3; i++)
     {
       for (int j = 0; j < 3; j++)
+      {
+        ss << mat->GetElement(i, j);
+        ss << delimiter;
+      }
+      ss << rowDelimiter;
+    }
+
+    return ss.str();
+  }
+
+  //----------------------------------------------------------------------------
+  std::string ToString(const vtkMatrix4x4* mat, const std::string delimiter = " ", const std::string rowDelimiter = "")
+  {
+    if (!mat)
+    {
+      return "";
+    }
+
+    std::stringstream ss;
+    for (int i = 0; i < 4; i++)
+    {
+      for (int j = 0; j < 4; j++)
       {
         ss << mat->GetElement(i, j);
         ss << delimiter;
@@ -112,6 +135,75 @@ namespace
     for (int row = 0; row < 3; row++)
     {
       for (int col = 0; col < 3; col++)
+      {
+        mat->SetElement(row, col, elements.at(linearIndex));
+        linearIndex++;
+      }
+    }
+
+    return true;
+  }
+
+  //----------------------------------------------------------------------------
+  bool FromString(vtkMatrix4x4* mat, const std::string& str, std::string& remainString, const std::string delimiterExp = "(\\ |\\,|\\:|\\;|\t|\n|\\[|\\])")
+  {
+    if (!mat)
+    {
+      return false;
+    }
+
+    // Parse the string using the regular expression
+    vtksys::RegularExpression delimiterRegex(delimiterExp);
+
+    // Convert each string token into a double and put into vector
+    char* end;
+    remainString = str;
+    std::vector<double> elements;
+    int count = 0;
+    while (!remainString.empty())
+    {
+      bool separatorFound = delimiterRegex.find(remainString);
+      std::string::size_type tokenStartIndex = remainString.length();
+      std::string::size_type tokenEndIndex = remainString.length();
+      if (separatorFound)
+      {
+        tokenStartIndex = delimiterRegex.start(0);
+        tokenEndIndex = delimiterRegex.end(0);
+      }
+
+      std::string valString = remainString.substr(0, tokenStartIndex);
+      remainString = remainString.substr(tokenEndIndex);
+      if (valString.empty()) // Handle back-to-back delimiters
+      {
+        continue;
+      }
+
+      // strtod is much faster (about 2x on some computers) than string stream
+      // based string->number conversion
+      double val = std::strtod(valString.c_str(), &end);
+      if (*end != 0) // Parsing failed due to non-numeric character
+      {
+        return false;
+      }
+
+      elements.push_back(val);
+      count++;
+      if (count == 16)
+      {
+        break;
+      }
+    }
+
+    if (elements.size() < 16)
+    {
+      return false;
+    }
+
+    // Put into matrix
+    int linearIndex = 0;
+    for (int row = 0; row < 4; row++)
+    {
+      for (int col = 0; col < 4; col++)
       {
         mat->SetElement(row, col, elements.at(linearIndex));
         linearIndex++;
@@ -230,8 +322,7 @@ void qMRMLWebcamIntrinsicsWidget::onWebcamSelectorChanged(vtkMRMLNode* newNode)
 
   if (this->CurrentNode != nullptr)
   {
-    d->tableWidget_CameraMatrix->setEnabled(true);
-    d->tableWidget_DistCoeffs->setEnabled(true);
+    d->collapsibleButton_Details->setEnabled(true);
 
     if (camNode->GetIntrinsicMatrix() != nullptr)
     {
@@ -260,8 +351,7 @@ void qMRMLWebcamIntrinsicsWidget::onWebcamSelectorChanged(vtkMRMLNode* newNode)
   }
   else
   {
-    d->tableWidget_CameraMatrix->setEnabled(false);
-    d->tableWidget_DistCoeffs->setEnabled(false);
+	  d->collapsibleButton_Details->setEnabled(false);
   }
 }
 
@@ -312,6 +402,29 @@ void qMRMLWebcamIntrinsicsWidget::onDistortionItemChanged(QTableWidgetItem* item
 }
 
 //----------------------------------------------------------------------------
+void qMRMLWebcamIntrinsicsWidget::onMarkerTransformItemChanged(QTableWidgetItem* item)
+{
+  Q_D(qMRMLWebcamIntrinsicsWidget);
+
+  bool ok;
+  double value = item->text().toDouble(&ok);
+
+  if (ok)
+  {
+    if (this->CurrentNode->GetMarkerToImageSensorTransform() == nullptr)
+    {
+      vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
+      mat->Identity();
+      this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(mat);
+    }
+
+    this->CurrentNode->RemoveObserver(this->MarkerTransformObserverTag);
+    this->CurrentNode->GetMarkerToImageSensorTransform()->SetElement(item->row(), item->column(), value);
+    this->MarkerTransformObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeMarkerTransformModified);
+  }
+}
+
+//----------------------------------------------------------------------------
 void qMRMLWebcamIntrinsicsWidget::setup()
 {
   Q_D(qMRMLWebcamIntrinsicsWidget);
@@ -325,6 +438,7 @@ void qMRMLWebcamIntrinsicsWidget::setup()
 
   connect(d->tableWidget_CameraMatrix, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onIntrinsicItemChanged(QTableWidgetItem*)));
   connect(d->tableWidget_DistCoeffs, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onDistortionItemChanged(QTableWidgetItem*)));
+  connect(d->tableWidget_MarkerToImageSensor, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onMarkerTransformItemChanged(QTableWidgetItem*)));
 
   d->CopyAction = new QAction(this);
   d->CopyAction->setIcon(QIcon(":Icons/Medium/SlicerEditCopy.png"));
@@ -342,7 +456,14 @@ void qMRMLWebcamIntrinsicsWidget::setup()
   this->connect(d->CopyAction, SIGNAL(triggered()), SLOT(copyData()));
   this->connect(d->PasteAction, SIGNAL(triggered()), SLOT(pasteData()));
 
-  d->tableWidget_DistCoeffs->setMaximumHeight(d->tableWidget_DistCoeffs->rowHeight(0));
+  d->tableWidget_CameraMatrix->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  d->tableWidget_CameraMatrix->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+  d->tableWidget_DistCoeffs->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  d->tableWidget_DistCoeffs->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+  d->tableWidget_MarkerToImageSensor->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  d->tableWidget_MarkerToImageSensor->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 //----------------------------------------------------------------------------
@@ -374,6 +495,14 @@ void qMRMLWebcamIntrinsicsWidget::copyData()
       ss << this->CurrentNode->GetDistortionCoefficients()->GetValue(i) << " ";
     }
   }
+
+  if (this->CurrentNode->GetMarkerToImageSensorTransform() != nullptr)
+  {
+    vtkMatrix4x4* internalMatrix = this->CurrentNode->GetMarkerToImageSensorTransform();
+    std::string delimiter = " ";
+    std::string rowDelimiter = "\n";
+    ss << ToString(internalMatrix, delimiter, rowDelimiter) << " ";
+  }
   QApplication::clipboard()->setText(QString::fromStdString(ss.str()));
 }
 
@@ -383,7 +512,6 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
   Q_D(qMRMLWebcamIntrinsicsWidget);
 
   vtkNew<vtkMatrix3x3> tempMatrix;
-
   std::string text = QApplication::clipboard()->text().toStdString();
   std::string remaining;
   bool success = FromString(tempMatrix.GetPointer(), text, remaining);
@@ -413,6 +541,21 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
   }
   this->CurrentNode->GetDistortionCoefficients()->DeepCopy(tempArray);
   this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent);
+
+  vtkNew<vtkMatrix4x4> tmpMatrix;
+  text = QApplication::clipboard()->text().toStdString();
+  success = FromString(tmpMatrix.GetPointer(), text, remaining);
+  if (!success)
+  {
+    qWarning() << "Cannot convert pasted string to matrix.";
+    return;
+  }
+  if (this->CurrentNode->GetMarkerToImageSensorTransform() == nullptr)
+  {
+    this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4::New());
+  }
+  this->CurrentNode->GetMarkerToImageSensorTransform()->DeepCopy(tmpMatrix);
+  this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent);
 }
 
 //----------------------------------------------------------------------------
@@ -462,6 +605,27 @@ void qMRMLWebcamIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkObject
 }
 
 //----------------------------------------------------------------------------
+void qMRMLWebcamIntrinsicsWidget::OnNodeMarkerTransformModified(vtkObject* caller, unsigned long event, void* data)
+{
+  Q_D(qMRMLWebcamIntrinsicsWidget);
+
+  vtkMRMLWebcamNode* camNode = vtkMRMLWebcamNode::SafeDownCast(caller);
+
+  if (camNode != nullptr && camNode->GetMarkerToImageSensorTransform() != nullptr)
+  {
+    bool oldState = d->tableWidget_MarkerToImageSensor->blockSignals(true);
+    for (int i = 0; i < 4; ++i)
+    {
+      for (int j = 0; j < 4; ++j)
+      {
+        d->tableWidget_MarkerToImageSensor->setItem(i, j, new QTableWidgetItem(QString::number(camNode->GetMarkerToImageSensorTransform()->GetElement(i, j))));
+      }
+    }
+    d->tableWidget_MarkerToImageSensor->blockSignals(oldState);
+  }
+}
+
+//----------------------------------------------------------------------------
 void qMRMLWebcamIntrinsicsWidget::SetCurrentNode(vtkMRMLWebcamNode* newNode)
 {
   if (this->CurrentNode != nullptr && this->CurrentNode != newNode)
@@ -475,6 +639,7 @@ void qMRMLWebcamIntrinsicsWidget::SetCurrentNode(vtkMRMLWebcamNode* newNode)
   {
     this->IntrinsicObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::IntrinsicsModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeIntrinsicsModified);
     this->DistortionObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
+    this->MarkerTransformObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeMarkerTransformModified);
   }
 }
 

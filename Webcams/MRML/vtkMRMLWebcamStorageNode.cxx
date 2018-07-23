@@ -130,18 +130,18 @@ int vtkMRMLWebcamStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   {
     array->InsertNextValue(distCoeffs.at<double>(i, 0));
   }
-  vtkNew<vtkMatrix4x4> markToSensor;
+  vtkNew<vtkMatrix4x4> markerToImageSensor;
   for (int i = 0; i < 4; ++i)
   {
     for (int j = 0; j < 4; ++j)
     {
-      markToSensor->SetElement(i, j, markerToSensor.at<double>(i, j));
+      markerToImageSensor->SetElement(i, j, markerToSensor.at<double>(i, j));
     }
   }
 
   cameraNode->SetAndObserveIntrinsicMatrix(mat);
   cameraNode->SetAndObserveDistortionCoefficients(array);
-  cameraNode->SetAndObserveMarkerToSensorTransform(markToSensor);
+  cameraNode->SetAndObserveMarkerToImageSensorTransform(markerToImageSensor);
 
   return 1;
 }
@@ -199,9 +199,9 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     fs << "DistortionCoefficients" << distCoeffs;
   }
 
-  if (node->GetMarkerToSensorTransform() == NULL)
+  if (node->GetMarkerToImageSensorTransform() == NULL)
   {
-    vtkInfoMacro("MarkerToSensor matrix has not been determined for this camera.");
+    vtkInfoMacro("MarkerToImageSensor matrix has not been determined for this camera.");
   }
   else
   {
@@ -210,7 +210,7 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     {
       for (int j = 0; j < 4; ++j)
       {
-        mat.at<double>(i, j) = node->GetMarkerToSensorTransform()->GetElement(i, j);
+        mat.at<double>(i, j) = node->GetMarkerToImageSensorTransform()->GetElement(i, j);
       }
     }
     fs << "MarkerToSensor" << mat;

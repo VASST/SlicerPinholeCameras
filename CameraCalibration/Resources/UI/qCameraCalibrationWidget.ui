@@ -420,7 +420,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_VolumeInput">
         <property name="text">
-         <string>Image source:</string>
+         <string>Image:</string>
         </property>
        </widget>
       </item>
@@ -451,7 +451,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_CameraTransform">
         <property name="text">
-         <string>Camera transform:</string>
+         <string>CameraToReference:</string>
         </property>
        </widget>
       </item>
@@ -479,7 +479,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_stylusTransform">
         <property name="text">
-         <string>StylusTip transform:</string>
+         <string>StylusTipToCamera:</string>
         </property>
        </widget>
       </item>
@@ -914,7 +914,7 @@
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_ProcessMode"/>
   <buttongroup name="buttonGroup_CircleGridMethod"/>
+  <buttongroup name="buttonGroup_ProcessMode"/>
  </buttongroups>
 </ui>
