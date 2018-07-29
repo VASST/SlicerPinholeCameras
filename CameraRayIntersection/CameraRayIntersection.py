@@ -20,7 +20,7 @@ class CameraRayIntersection(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Camera Ray Intersection"
     self.parent.categories = ["Webcams"]
-    self.parent.dependencies = ["PointToLineRegistration", "Annotations"]
+    self.parent.dependencies = ["LinesRegistration", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles"""
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
@@ -308,14 +308,22 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 # CameraRayIntersectionLogic
 #
 class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):
-  rays = []
+  def __init__(self):
+    self.linesRegistrationLogic = slicer.vtkSlicerLinesIntersectionLogic()
 
   def reset(self):
     # clear list of rays
-    self.rays = []
+    self.linesRegistrationLogic.Reset()
 
   def addRay(self, origin, direction):
-    self.rays.append([origin, direction])
+    self.linesRegistrationLogic.AddLine(origin, direction)
+    if self.linesRegistrationLogic.Count() > 2:
+      self.linesRegistrationLogic.Update()
+
+  def getPoint(self):
+    if self.linesRegistrationLogic.Count() > 2:
+      return self.linesRegistrationLogic.Update()
+    return None
 
 #
 # CameraRayIntersectionTest
