@@ -289,7 +289,11 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       origin_ref = mat * origin_sensor
       directionVec_ref = mat * directionVec_sensor
 
-      self.logic.addRay(origin_ref, directionVec_ref)
+      result = self.logic.addRay(origin_ref, directionVec_ref)
+      if result is not None:
+        self.resultsLabel.text = "Point: " + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + ". Error: " + str(self.logic.getError())
+        # For ease of copy pasting multiple entries, print it to the python console
+        print "Intersection|" + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + "|" + str(self.logic.getError())
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
@@ -328,12 +332,16 @@ class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):
   def addRay(self, origin, direction):
     self.linesRegistrationLogic.AddLine(origin, direction)
     if self.linesRegistrationLogic.Count() > 2:
-      self.linesRegistrationLogic.Update()
+      return self.linesRegistrationLogic.Update()
+    return None
 
   def getPoint(self):
     if self.linesRegistrationLogic.Count() > 2:
       return self.linesRegistrationLogic.Update()
     return None
+
+  def getError(self):
+    return self.linesRegistrationLogic.GetError()
 
 #
 # CameraRayIntersectionTest
