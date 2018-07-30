@@ -273,13 +273,23 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
       # Get the direction based on selected pixel
       origin_sensor = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
-      directionVec_sensor = np.linalg.inv(mtx) * pixel
-
-      # Normalize the direction vector
-      directionVecNormalized_sensor = directionVec_sensor / np.linalg.norm(directionVec_sensor)
-
+      directionVec_sensor = (np.linalg.inv(mtx) * pixel) / np.linalg.norm(np.linalg.inv(mtx) * pixel)
 
       # left multiply by marker to imagesensor^-1, then marker to reference
+      sensorToMarker = vtk.vtkMatrix4x4.Invert(self.cameraSelector.currentNode().GetMarkerToImageSensorTransform())
+      markerToReference = self.cameraTransformSelector.currentNode().GetMatrixTransformToParent()
+
+      sensorToRef = vtk.vtkTransform()
+      sensorToRef.PostMultiply()
+      sensorToRef.Identity();
+      sensorToRef.Concatenate(sensorToMarker)
+      sensorToRef.Concatenate(markerToReference)
+      mat = CameraRayIntersectionWidget.vtk4x4tonumpy(sensorToRef.GetMatrix())
+
+      origin_ref = mat * origin_sensor
+      directionVec_ref = mat * directionVec_sensor
+
+      self.logic.addRay(origin_ref, directionVec_ref)
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
