@@ -625,7 +625,6 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def calibrateCamera(self):
     if len(self.imagePoints) > 0:
-      print self.imageSize
       ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
       mat = vtk.vtkMatrix3x3()
       for i in range(0, 3):
