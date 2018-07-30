@@ -6,12 +6,6 @@ import numpy as np
 import logging
 from slicer.ScriptedLoadableModule import ScriptedLoadableModule, ScriptedLoadableModuleWidget, ScriptedLoadableModuleLogic, ScriptedLoadableModuleTest
 
-try:
-  import cv2
-  OPENCV2_AVAILABLE = True
-except ImportError:
-  OPENCV2_AVAILABLE = False
-
 #
 # CameraRayIntersection
 #
@@ -20,7 +14,7 @@ class CameraRayIntersection(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Camera Ray Intersection"
     self.parent.categories = ["Webcams"]
-    self.parent.dependencies = ["LinesRegistration", "Annotations"]
+    self.parent.dependencies = ["LinesIntersection", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles"""
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
@@ -42,7 +36,32 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       return None
 
   @staticmethod
-  def vtk4x4tonumpy(vtk4x4):
+  def emptyOrZeros(doubleArray):
+    count = doubleArray.GetNumberOfValues()
+    result = True
+    for i in range(0, count):
+      if doubleArray.GetValue(i) != 0.0:
+        return False
+    return True
+
+  @staticmethod
+  def areSameVTK4x4(a, b):
+    for i in range(0, 4):
+      for j in range(0, 4):
+        if a.GetElement(i,j) != b.GetElement(i,j):
+          return False
+    return True
+
+  @staticmethod
+  def areSameVTK3x3(a, b):
+    for i in range(0, 3):
+      for j in range(0, 3):
+        if a.GetElement(i,j) != b.GetElement(i,j):
+          return False
+    return True
+
+  @staticmethod
+  def vtk4x4ToNumpy(vtk4x4):
     if vtk4x4 is None:
       return
 
@@ -54,7 +73,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     return val
 
   @staticmethod
-  def vtk3x3tonumpy(vtk3x3):
+  def vtk3x3ToNumpy(vtk3x3):
     if vtk3x3 is None:
       return
 
@@ -66,6 +85,18 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     return val
   def __init__(self, parent):
     ScriptedLoadableModuleWidget.__init__(self, parent)
+
+    global OPENCV2_AVAILABLE
+    try:
+      global cv2
+      import cv2
+      OPENCV2_AVAILABLE = True
+    except ImportError:
+      OPENCV2_AVAILABLE = False
+
+    if not OPENCV2_AVAILABLE:
+      logging.error("OpenCV2 python interface not available.")
+      return
 
     self.logic = CameraRayIntersectionLogic()
 
@@ -157,11 +188,11 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     if node is not None:
       string = ""
       # Check state of selected camera
-      if node.GetIntrinsicMatrix() is None:
+      if CameraRayIntersectionWidget.areSameVTK3x3(node.GetIntrinsicMatrix(), vtk.vtkMatrix3x3.Identity()):
         string += "No camera intrinsics! "
-      if node.GetDistortionCoefficients() is None:
+      if CameraRayIntersectionWidget.emptyOrZeros(node.GetDistortionCoefficients()):
         string += "No distortion coefficients! "
-      if node.GetMarkerToImageSensorTransform() is None:
+      if CameraRayIntersectionWidget.areSameVTK4x4(node.GetMarkerToImageSensorTransform(), vtk.vtkMatrix4x4.Identity()):
         string += "No tracker calibration performed! "
 
       if len(string) > 0:
@@ -237,7 +268,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     # Record tracker data at time of freeze and store
     cameraToReferenceVtk = vtk.vtkMatrix4x4()
     self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
-    self.cameraToReference = CameraRayIntersectionWidget.vtk4x4tonumpy(cameraToReferenceVtk)
+    self.cameraToReference = CameraRayIntersectionWidget.vtk4x4ToNumpy(cameraToReferenceVtk)
     self.cameraOriginInReference = [cameraToReferenceVtk.GetElement(0, 3), cameraToReferenceVtk.GetElement(1, 3), cameraToReferenceVtk.GetElement(2, 3)]
 
     # Disable resetting while capture is active
@@ -258,12 +289,11 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       point[0,0,1] = abs(arr[1])
 
       # Get camera parameters
-      mtx = CameraRayIntersectionWidget.vtk3x3tonumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
+      mtx = CameraRayIntersectionWidget.vtk3x3ToNumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
 
-      if self.cameraSelector.currentNode().GetDistortionCoefficients() is not None:
-        dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-        for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-          dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+      for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+        dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 
@@ -284,7 +314,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       sensorToRef.Identity();
       sensorToRef.Concatenate(sensorToMarker)
       sensorToRef.Concatenate(markerToReference)
-      mat = CameraRayIntersectionWidget.vtk4x4tonumpy(sensorToRef.GetMatrix())
+      mat = CameraRayIntersectionWidget.vtk4x4ToNumpy(sensorToRef.GetMatrix())
 
       origin_ref = mat * origin_sensor
       directionVec_ref = mat * directionVec_sensor

@@ -6,12 +6,6 @@ import numpy as np
 import logging
 from slicer.ScriptedLoadableModule import ScriptedLoadableModule, ScriptedLoadableModuleWidget, ScriptedLoadableModuleLogic, ScriptedLoadableModuleTest
 
-try:
-  import cv2
-  OPENCV2_AVAILABLE = True
-except ImportError:
-  OPENCV2_AVAILABLE = False
-
 # CameraCalibration
 class CameraCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
@@ -39,7 +33,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       return None
 
   @staticmethod
-  def vtk4x4tonumpy(vtk4x4):
+  def vtk4x4ToNumpy(vtk4x4):
     if vtk4x4 is None:
       return
 
@@ -51,7 +45,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     return val
 
   @staticmethod
-  def vtk3x3tonumpy(vtk3x3):
+  def vtk3x3ToNumpy(vtk3x3):
     if vtk3x3 is None:
       return
 
@@ -64,6 +58,18 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   def __init__(self, parent):
     ScriptedLoadableModuleWidget.__init__(self, parent)
+
+    global OPENCV2_AVAILABLE
+    try:
+      global cv2
+      import cv2
+      OPENCV2_AVAILABLE = True
+    except ImportError:
+      OPENCV2_AVAILABLE = False
+
+    if not OPENCV2_AVAILABLE:
+      logging.error("OpenCV2 python interface not available.")
+      return
 
     self.logic = CameraCalibrationLogic()
 
@@ -436,7 +442,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.stylusTipToCamera = mat
     cameraToReferenceVtk = vtk.vtkMatrix4x4()
     self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
-    self.cameraToReference = CameraCalibrationWidget.vtk4x4tonumpy(cameraToReferenceVtk)
+    self.cameraToReference = CameraCalibrationWidget.vtk4x4ToNumpy(cameraToReferenceVtk)
     self.cameraOriginInReference = [cameraToReferenceVtk.GetElement(0, 3), cameraToReferenceVtk.GetElement(1, 3), cameraToReferenceVtk.GetElement(2, 3)]
 
     # Disable input changing while capture is active
@@ -460,12 +466,11 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       # Get camera parameters
       # Convert vtk to numpy
-      mtx = CameraCalibrationWidget.vtk3x3tonumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
+      mtx = CameraCalibrationWidget.vtk3x3ToNumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
 
-      if self.cameraSelector.currentNode().GetDistortionCoefficients() is not None:
-        dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-        for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-          dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+      for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+        dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 
@@ -520,7 +525,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       qt.QTimer.singleShot(10, self.removeMarkup)
 
   def calcRegAndBuildString(self):
-    mtx = CameraCalibrationWidget.vtk3x3tonumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
+    mtx = CameraCalibrationWidget.vtk3x3ToNumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
 
     result, cameraToImage = self.logic.calculateCameraToImage()
     string = ""

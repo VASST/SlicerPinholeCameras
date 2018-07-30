@@ -37,27 +37,19 @@ vtkMRMLWebcamNode::vtkMRMLWebcamNode()
   , DistortionCoefficients(nullptr)
   , MarkerToImageSensorTransform(nullptr)
 {
-
+  this->SetAndObserveIntrinsicMatrix(vtkMatrix3x3::New());
+  this->SetAndObserveDistortionCoefficients(vtkDoubleArray::New());
+  this->GetDistortionCoefficients()->SetNumberOfValues(5);
+  this->GetDistortionCoefficients()->FillValue(0.0);
+  this->SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4::New());
 }
 
 //-----------------------------------------------------------------------------
 vtkMRMLWebcamNode::~vtkMRMLWebcamNode()
 {
-  if (this->IntrinsicMatrix != NULL)
-  {
-    this->IntrinsicMatrix->RemoveAllObservers();
-    this->IntrinsicMatrix->Delete();
-  }
-  if (this->DistortionCoefficients != NULL)
-  {
-    this->DistortionCoefficients->RemoveAllObservers();
-    this->DistortionCoefficients->Delete();
-  }
-  if (this->MarkerToImageSensorTransform != NULL)
-  {
-    this->MarkerToImageSensorTransform->RemoveAllObservers();
-    this->MarkerToImageSensorTransform->Delete();
-  }
+  this->SetAndObserveIntrinsicMatrix(nullptr);
+  this->SetAndObserveDistortionCoefficients(nullptr);
+  this->SetAndObserveMarkerToImageSensorTransform(nullptr);
 }
 
 //----------------------------------------------------------------------------

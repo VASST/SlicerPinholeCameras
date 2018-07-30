@@ -324,34 +324,13 @@ void qMRMLWebcamIntrinsicsWidget::onWebcamSelectorChanged(vtkMRMLNode* newNode)
   {
     d->collapsibleButton_Details->setEnabled(true);
 
-    if (camNode->GetIntrinsicMatrix() != nullptr)
-    {
-      for (int i = 0; i < 3; ++i)
-      {
-        for (int j = 0; j < 3; ++j)
-        {
-          d->tableWidget_CameraMatrix->setItem(i, j, new QTableWidgetItem(QString::number(camNode->GetIntrinsicMatrix()->GetElement(i, j))));
-        }
-      }
-    }
-
-    if (camNode->GetDistortionCoefficients())
-    {
-      d->tableWidget_DistCoeffs->clear();
-      d->tableWidget_DistCoeffs->setRowCount(0);
-      d->tableWidget_DistCoeffs->setColumnCount(0);
-      d->tableWidget_DistCoeffs->insertRow(0);
-
-      for (int i = 0; i < camNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
-      {
-        d->tableWidget_DistCoeffs->insertColumn(d->tableWidget_DistCoeffs->columnCount());
-        d->tableWidget_DistCoeffs->setItem(0, i, new QTableWidgetItem(QString::number(camNode->GetDistortionCoefficients()->GetValue(i))));
-      }
-    }
+    this->OnNodeIntrinsicsModified(newNode, vtkMRMLWebcamNode::IntrinsicsModifiedEvent, nullptr);
+    this->OnNodeDistortionCoefficientsModified(newNode, vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent, nullptr);
+    this->OnNodeMarkerTransformModified(newNode, vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent, nullptr);
   }
   else
   {
-	  d->collapsibleButton_Details->setEnabled(false);
+    d->collapsibleButton_Details->setEnabled(false);
   }
 }
 

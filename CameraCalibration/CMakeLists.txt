@@ -3,7 +3,7 @@ set(MODULE_NAME CameraCalibration)
 
 #-----------------------------------------------------------------------------
 find_package(SlicerOpenCV REQUIRED)
-find_package(VASSTRegistration REQUIRED)
+find_package(VASSTAlgorithms REQUIRED)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
