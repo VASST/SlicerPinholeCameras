@@ -117,7 +117,7 @@ void vtkMRMLWebcamNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* 
 //----------------------------------------------------------------------------
 vtkMRMLStorageNode* vtkMRMLWebcamNode::CreateDefaultStorageNode()
 {
-  return vtkMRMLStorageNode::SafeDownCast(vtkMRMLWebcamStorageNode::New());
+  return vtkMRMLWebcamStorageNode::New();
 }
 
 //----------------------------------------------------------------------------

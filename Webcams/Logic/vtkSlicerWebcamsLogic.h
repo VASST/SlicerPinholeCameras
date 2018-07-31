@@ -31,16 +31,22 @@ Version:   $Revision: 1.0 $
 
 #include "vtkSlicerWebcamsModuleLogicExport.h"
 
+class vtkMRMLWebcamNode;
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class VTK_SLICER_WEBCAMS_MODULE_LOGIC_EXPORT vtkSlicerWebcamsLogic :
   public vtkSlicerModuleLogic
 {
 public:
-
   static vtkSlicerWebcamsLogic* New();
   vtkTypeMacro(vtkSlicerWebcamsLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  ///
+  /// Add into the scene a new mrml webcam node and
+  /// read it's properties from a specified file
+  /// A storage node is also added into the scene
+  vtkMRMLWebcamNode* AddWebcam(const char* filename, const char* nodeName = NULL);
 
 protected:
   vtkSlicerWebcamsLogic();

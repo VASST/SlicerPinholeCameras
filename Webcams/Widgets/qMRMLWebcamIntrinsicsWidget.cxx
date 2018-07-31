@@ -459,29 +459,22 @@ void qMRMLWebcamIntrinsicsWidget::copyData()
   Q_D(qMRMLWebcamIntrinsicsWidget);
 
   std::stringstream ss;
-  if (this->CurrentNode->GetIntrinsicMatrix() != nullptr)
-  {
-    vtkMatrix3x3* internalMatrix = this->CurrentNode->GetIntrinsicMatrix();
-    std::string delimiter = " ";
-    std::string rowDelimiter = "\n";
-    ss << ToString(internalMatrix, delimiter, rowDelimiter) << " ";
-  }
+  vtkMatrix3x3* internalMatrix = this->CurrentNode->GetIntrinsicMatrix();
+  std::string delimiter = " ";
+  std::string rowDelimiter = "\n";
+  ss << ToString(internalMatrix, delimiter, rowDelimiter) << " ";
+  ss << std::endl;
 
-  if (this->CurrentNode->GetDistortionCoefficients() != nullptr)
-  {
-    for (int i = 0; i < this->CurrentNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
-    {
-      ss << this->CurrentNode->GetDistortionCoefficients()->GetValue(i) << " ";
-    }
-  }
+  vtkMatrix4x4* markerToSensor = this->CurrentNode->GetMarkerToImageSensorTransform();
+  ss << ToString(markerToSensor, delimiter, rowDelimiter) << " ";
+  ss << std::endl;
 
-  if (this->CurrentNode->GetMarkerToImageSensorTransform() != nullptr)
+  for (int i = 0; i < this->CurrentNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
   {
-    vtkMatrix4x4* internalMatrix = this->CurrentNode->GetMarkerToImageSensorTransform();
-    std::string delimiter = " ";
-    std::string rowDelimiter = "\n";
-    ss << ToString(internalMatrix, delimiter, rowDelimiter) << " ";
+    ss << this->CurrentNode->GetDistortionCoefficients()->GetValue(i) << " ";
   }
+  ss << std::endl;
+
   QApplication::clipboard()->setText(QString::fromStdString(ss.str()));
 }
 
@@ -490,6 +483,7 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
 {
   Q_D(qMRMLWebcamIntrinsicsWidget);
 
+  // Intrinsics
   vtkNew<vtkMatrix3x3> tempMatrix;
   std::string text = QApplication::clipboard()->text().toStdString();
   std::string remaining;
@@ -499,42 +493,31 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
     qWarning() << "Cannot convert pasted string to matrix.";
     return;
   }
-  if (this->CurrentNode->GetIntrinsicMatrix() == nullptr)
-  {
-    this->CurrentNode->SetAndObserveIntrinsicMatrix(vtkMatrix3x3::New());
-  }
-  this->CurrentNode->GetIntrinsicMatrix()->DeepCopy(tempMatrix);
+  this->CurrentNode->SetAndObserveIntrinsicMatrix(tempMatrix);
   this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::IntrinsicsModifiedEvent);
 
+  // Marker to sensor calibration
+  vtkNew<vtkMatrix4x4> tmpMatrix;
+  text = QApplication::clipboard()->text().toStdString();
+  success = FromString(tmpMatrix.GetPointer(), remaining, remaining);
+  if (!success)
+  {
+    qWarning() << "Cannot convert pasted string to matrix.";
+    return;
+  }
+  this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(tmpMatrix);
+  this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent);
+
+  // Distortion Coefficients
   vtkNew<vtkDoubleArray> tempArray;
   success = FromString(tempArray.GetPointer(), remaining);
   if (!success)
   {
     qWarning() << "Cannot convert remaining values to distortion coefficients.";
     return;
-
   }
-  if (this->CurrentNode->GetDistortionCoefficients() == nullptr)
-  {
-    this->CurrentNode->SetAndObserveDistortionCoefficients(vtkDoubleArray::New());
-  }
-  this->CurrentNode->GetDistortionCoefficients()->DeepCopy(tempArray);
+  this->CurrentNode->SetAndObserveDistortionCoefficients(tempArray);
   this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent);
-
-  vtkNew<vtkMatrix4x4> tmpMatrix;
-  text = QApplication::clipboard()->text().toStdString();
-  success = FromString(tmpMatrix.GetPointer(), text, remaining);
-  if (!success)
-  {
-    qWarning() << "Cannot convert pasted string to matrix.";
-    return;
-  }
-  if (this->CurrentNode->GetMarkerToImageSensorTransform() == nullptr)
-  {
-    this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4::New());
-  }
-  this->CurrentNode->GetMarkerToImageSensorTransform()->DeepCopy(tmpMatrix);
-  this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent);
 }
 
 //----------------------------------------------------------------------------

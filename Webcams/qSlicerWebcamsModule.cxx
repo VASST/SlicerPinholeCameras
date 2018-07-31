@@ -18,9 +18,19 @@
 // Webcams Logic includes
 #include <vtkSlicerWebcamsLogic.h>
 
+// Slicer includes
+#include <qSlicerApplication.h>
+#include <qSlicerIOManager.h>
+#include <qSlicerModuleManager.h>
+#include <qSlicerNodeWriter.h>
+
+// Slicer logic includes
+#include <vtkSlicerApplicationLogic.h>
+
 // Webcams includes
 #include "qSlicerWebcamsModule.h"
 #include "qSlicerWebcamsModuleWidget.h"
+#include "qSlicerWebcamsReader.h"
 
 //-----------------------------------------------------------------------------
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
@@ -101,6 +111,16 @@ QStringList qSlicerWebcamsModule::dependencies() const
 void qSlicerWebcamsModule::setup()
 {
   this->Superclass::setup();
+
+  vtkSlicerWebcamsLogic* webcamsLogic = vtkSlicerWebcamsLogic::SafeDownCast(this->logic());
+
+  if (qSlicerApplication::application())
+  {
+    // Register IOs
+    qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
+    ioManager->registerIO(new qSlicerWebcamsReader(webcamsLogic, this));
+    ioManager->registerIO(new qSlicerNodeWriter("Webcams", QString("WebcamFile"), QStringList() << "vtkMRMLWebcamNode", false, this));
+  }
 }
 
 //-----------------------------------------------------------------------------
