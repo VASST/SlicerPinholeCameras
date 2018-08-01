@@ -17,26 +17,26 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerWebcamsReader_h
-#define __qSlicerWebcamsReader_h
+#ifndef __qSlicerWebcamsReaderPlugin_h
+#define __qSlicerWebcamsReaderPlugin_h
 
 // SlicerQt includes
 #include "qSlicerFileReader.h"
-class qSlicerWebcamsReaderPrivate;
+class qSlicerWebcamsReaderPluginPrivate;
 
 // Slicer includes
 class vtkSlicerWebcamsLogic;
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_Webcams
-class qSlicerWebcamsReader
+class qSlicerWebcamsReaderPlugin
   : public qSlicerFileReader
 {
   Q_OBJECT
 public:
   typedef qSlicerFileReader Superclass;
-  qSlicerWebcamsReader(vtkSlicerWebcamsLogic* WebcamsLogic = 0, QObject* parent = 0);
-  virtual ~qSlicerWebcamsReader();
+  qSlicerWebcamsReaderPlugin(vtkSlicerWebcamsLogic* WebcamsLogic = 0, QObject* parent = 0);
+  virtual ~qSlicerWebcamsReaderPlugin();
 
   void setWebcamsLogic(vtkSlicerWebcamsLogic* WebcamsLogic);
   vtkSlicerWebcamsLogic* WebcamsLogic()const;
@@ -48,11 +48,11 @@ public:
   virtual bool load(const IOProperties& properties);
 
 protected:
-  QScopedPointer<qSlicerWebcamsReaderPrivate> d_ptr;
+  QScopedPointer<qSlicerWebcamsReaderPluginPrivate> d_ptr;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerWebcamsReader);
-  Q_DISABLE_COPY(qSlicerWebcamsReader);
+  Q_DECLARE_PRIVATE(qSlicerWebcamsReaderPlugin);
+  Q_DISABLE_COPY(qSlicerWebcamsReaderPlugin);
 };
 
 #endif

@@ -6,23 +6,19 @@ import numpy as np
 import logging
 from slicer.ScriptedLoadableModule import ScriptedLoadableModule, ScriptedLoadableModuleWidget, ScriptedLoadableModuleLogic, ScriptedLoadableModuleTest
 
-#
 # CameraRayIntersection
-#
 class CameraRayIntersection(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Camera Ray Intersection"
     self.parent.categories = ["Webcams"]
-    self.parent.dependencies = ["LinesIntersection", "Annotations"]
+    self.parent.dependencies = ["Webcams", "LinesIntersection", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles"""
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
     self.parent.acknowledgementText = ""
 
-#
 # CameraRayIntersectionWidget
-#
 class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
   @staticmethod
   def get(widget, objectName):
@@ -348,9 +344,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       slicer.mrmlScene.RemoveNode(self.tempMarkupNode)
       self.tempMarkupNode = None
 
-#
 # CameraRayIntersectionLogic
-#
 class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):
   def __init__(self):
     self.linesRegistrationLogic = slicer.vtkSlicerLinesIntersectionLogic()
@@ -373,16 +367,8 @@ class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):
   def getError(self):
     return self.linesRegistrationLogic.GetError()
 
-#
 # CameraRayIntersectionTest
-#
 class CameraRayIntersectionTest(ScriptedLoadableModuleTest):
-  """
-  This is the test case for your scripted module.
-  Uses ScriptedLoadableModuleTest base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
-
   def setUp(self):
     """ Do whatever is needed to reset the state - typically a scene clear will be enough.
     """

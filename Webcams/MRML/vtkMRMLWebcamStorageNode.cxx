@@ -50,7 +50,7 @@ void vtkMRMLWebcamStorageNode::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 bool vtkMRMLWebcamStorageNode::CanReadInReferenceNode(vtkMRMLNode* refNode)
 {
-  return refNode->IsA("vtkMRMLWebcamStorageNode");
+  return refNode->IsA("vtkMRMLWebcamNode");
 }
 
 //----------------------------------------------------------------------------
@@ -143,7 +143,7 @@ int vtkMRMLWebcamStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
 //----------------------------------------------------------------------------
 int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
 {
-  vtkMRMLWebcamNode* modelNode = vtkMRMLWebcamNode::SafeDownCast(refNode);
+  vtkMRMLWebcamNode* webcamNode = vtkMRMLWebcamNode::SafeDownCast(refNode);
 
   std::string fullName = this->GetFullNameFromFileName();
   if (fullName.empty())
@@ -151,8 +151,6 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     vtkErrorMacro("File name not specified");
     return 0;
   }
-
-  vtkMRMLWebcamNode* node = this->GetAssociatedDataNode();
 
   cv::FileStorage fs(fullName, cv::FileStorage::WRITE);
 
@@ -162,7 +160,7 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     return 0;
   }
 
-  if (node->GetIntrinsicMatrix() == NULL)
+  if (webcamNode->GetIntrinsicMatrix() == NULL)
   {
     vtkInfoMacro("Intrinsincs have not been determined for this camera.");
   }
@@ -173,27 +171,27 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     {
       for (int j = 0; j < 3; ++j)
       {
-        intrinMat.at<double>(i, j) = node->GetIntrinsicMatrix()->GetElement(i, j);
+        intrinMat.at<double>(i, j) = webcamNode->GetIntrinsicMatrix()->GetElement(i, j);
       }
     }
     fs << "IntrinsicMatrix" << intrinMat;
   }
 
-  if (node->GetDistortionCoefficients() == NULL)
+  if (webcamNode->GetDistortionCoefficients() == NULL)
   {
     vtkInfoMacro("Distortion coefficients have not been determined for this camera.");
   }
   else
   {
-    cv::Mat distCoeffs(node->GetDistortionCoefficients()->GetSize(), 1, CV_64F);
-    for (int i = 0; i < node->GetDistortionCoefficients()->GetSize(); ++i)
+    cv::Mat distCoeffs(webcamNode->GetDistortionCoefficients()->GetSize(), 1, CV_64F);
+    for (int i = 0; i < webcamNode->GetDistortionCoefficients()->GetSize(); ++i)
     {
-      distCoeffs.at<double>(i, 0) = node->GetDistortionCoefficients()->GetValue(i);
+      distCoeffs.at<double>(i, 0) = webcamNode->GetDistortionCoefficients()->GetValue(i);
     }
     fs << "DistortionCoefficients" << distCoeffs;
   }
 
-  if (node->GetMarkerToImageSensorTransform() == NULL)
+  if (webcamNode->GetMarkerToImageSensorTransform() == NULL)
   {
     vtkInfoMacro("MarkerToImageSensor matrix has not been determined for this camera.");
   }
@@ -204,7 +202,7 @@ int vtkMRMLWebcamStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     {
       for (int j = 0; j < 4; ++j)
       {
-        mat.at<double>(i, j) = node->GetMarkerToImageSensorTransform()->GetElement(i, j);
+        mat.at<double>(i, j) = webcamNode->GetMarkerToImageSensorTransform()->GetElement(i, j);
       }
     }
     fs << "MarkerToSensor" << mat;

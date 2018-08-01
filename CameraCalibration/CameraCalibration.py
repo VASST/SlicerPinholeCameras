@@ -12,7 +12,7 @@ class CameraCalibration(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Calibration"
     self.parent.categories = ["Webcams"]
-    self.parent.dependencies = ["PointToLineRegistration", "Annotations"]
+    self.parent.dependencies = ["Webcams", "PointToLineRegistration", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """Perform intrinsic and extrinsic camera calibration against an external tracker."""
     self.parent.helpText += self.getDefaultModuleDocumentationLink()

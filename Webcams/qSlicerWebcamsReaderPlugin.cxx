@@ -21,7 +21,7 @@
 #include <QFileInfo>
 
 // SlicerQt includes
-#include "qSlicerWebcamsReader.h"
+#include "qSlicerWebcamsReaderPlugin.h"
 
 // Logic includes
 #include "vtkSlicerWebcamsLogic.h"
@@ -34,7 +34,7 @@
 #include <vtkSmartPointer.h>
 
 //-----------------------------------------------------------------------------
-class qSlicerWebcamsReaderPrivate
+class qSlicerWebcamsReaderPluginPrivate
 {
 public:
   vtkSmartPointer<vtkSlicerWebcamsLogic> WebcamsLogic;
@@ -42,55 +42,55 @@ public:
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_Webcams
-qSlicerWebcamsReader::qSlicerWebcamsReader(vtkSlicerWebcamsLogic* _WebcamsLogic, QObject* _parent)
+qSlicerWebcamsReaderPlugin::qSlicerWebcamsReaderPlugin(vtkSlicerWebcamsLogic* _WebcamsLogic, QObject* _parent)
   : Superclass(_parent)
-  , d_ptr(new qSlicerWebcamsReaderPrivate)
+  , d_ptr(new qSlicerWebcamsReaderPluginPrivate)
 {
   this->setWebcamsLogic(_WebcamsLogic);
 }
 
 //-----------------------------------------------------------------------------
-qSlicerWebcamsReader::~qSlicerWebcamsReader()
+qSlicerWebcamsReaderPlugin::~qSlicerWebcamsReaderPlugin()
 {
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerWebcamsReader::setWebcamsLogic(vtkSlicerWebcamsLogic* newWebcamsLogic)
+void qSlicerWebcamsReaderPlugin::setWebcamsLogic(vtkSlicerWebcamsLogic* newWebcamsLogic)
 {
-  Q_D(qSlicerWebcamsReader);
+  Q_D(qSlicerWebcamsReaderPlugin);
   d->WebcamsLogic = newWebcamsLogic;
 }
 
 //-----------------------------------------------------------------------------
-vtkSlicerWebcamsLogic* qSlicerWebcamsReader::WebcamsLogic()const
+vtkSlicerWebcamsLogic* qSlicerWebcamsReaderPlugin::WebcamsLogic()const
 {
-  Q_D(const qSlicerWebcamsReader);
+  Q_D(const qSlicerWebcamsReaderPlugin);
   return d->WebcamsLogic;
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerWebcamsReader::description()const
+QString qSlicerWebcamsReaderPlugin::description()const
 {
   return "Webcam";
 }
 
 //-----------------------------------------------------------------------------
-qSlicerIO::IOFileType qSlicerWebcamsReader::fileType()const
+qSlicerIO::IOFileType qSlicerWebcamsReaderPlugin::fileType()const
 {
   return QString("WebcamFile");
 }
 
 //-----------------------------------------------------------------------------
-QStringList qSlicerWebcamsReader::extensions()const
+QStringList qSlicerWebcamsReaderPlugin::extensions()const
 {
   return QStringList()
          << "Webcam (*.xml)";
 }
 
 //-----------------------------------------------------------------------------
-bool qSlicerWebcamsReader::load(const IOProperties& properties)
+bool qSlicerWebcamsReaderPlugin::load(const IOProperties& properties)
 {
-  Q_D(qSlicerWebcamsReader);
+  Q_D(qSlicerWebcamsReaderPlugin);
   Q_ASSERT(properties.contains("fileName"));
   QString fileName = properties["fileName"].toString();
 

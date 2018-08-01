@@ -30,7 +30,7 @@
 // Webcams includes
 #include "qSlicerWebcamsModule.h"
 #include "qSlicerWebcamsModuleWidget.h"
-#include "qSlicerWebcamsReader.h"
+#include "qSlicerWebcamsReaderPlugin.h"
 
 //-----------------------------------------------------------------------------
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
@@ -118,14 +118,13 @@ void qSlicerWebcamsModule::setup()
   {
     // Register IOs
     qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
-    ioManager->registerIO(new qSlicerWebcamsReader(webcamsLogic, this));
+    ioManager->registerIO(new qSlicerWebcamsReaderPlugin(webcamsLogic, this));
     ioManager->registerIO(new qSlicerNodeWriter("Webcams", QString("WebcamFile"), QStringList() << "vtkMRMLWebcamNode", false, this));
   }
 }
 
 //-----------------------------------------------------------------------------
-qSlicerAbstractModuleRepresentation* qSlicerWebcamsModule
-::createWidgetRepresentation()
+qSlicerAbstractModuleRepresentation* qSlicerWebcamsModule::createWidgetRepresentation()
 {
   return new qSlicerWebcamsModuleWidget;
 }
