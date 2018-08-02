@@ -90,6 +90,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.debugMode = False
     self.canSelectFiducials = True
     self.isManualCapturing = False
+    self.rayList = []
 
     self.centerFiducialSelectionNode = None
     self.copyNode = None
@@ -324,7 +325,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
 
   def onResetPtL(self):
-    self.logic.resetCameraToImage()
+    self.rayList = []
+    self.logic.resetMarkerToSensor()
     self.trackerResultsLabel.text = "Reset."
 
   def onImageSelected(self):
@@ -344,11 +346,11 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.onSelect()
 
   def onCaptureCountChanged(self):
-    countString = str(self.logic.countCameraToImage()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
+    countString = str(self.logic.countMarkerToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
     string = ""
     result = False
 
-    if self.logic.countCameraToImage() >= self.captureCountSpinBox.value:
+    if self.logic.countMarkerToSensor() >= self.captureCountSpinBox.value:
       result, cameraToImage, string = self.calcRegAndBuildString()
 
     if result:
@@ -556,11 +558,19 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # And add it to the list!
       self.logic.addPointLinePair(x, origin, directionVecNormalized)
 
-      countString = str(self.logic.countCameraToImage()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
+      if self.debugMode:
+        self.rayList.append([x, origin, directionVecNormalized])
 
-      if self.logic.countCameraToImage() >= self.captureCountSpinBox.value:
+      countString = str(self.logic.countMarkerToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
+
+      if self.logic.countMarkerToSensor() >= self.captureCountSpinBox.value:
         result, cameraToImage, string = self.calcRegAndBuildString()
         if result and self.debugMode:
+          for combination in self.rayList:
+            print "x: ", combination[0]
+            print "origin: ", combination[1]
+            print "dir: ", combination[2]
+
           trans = vtk.vtkTransform()
           trans.PostMultiply()
           trans.Identity()
@@ -587,19 +597,17 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       qt.QTimer.singleShot(10, self.removeMarkup)
 
   def calcRegAndBuildString(self):
-    mtx = CameraCalibrationWidget.vtk3x3ToNumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
-
-    result, cameraToImage = self.logic.calculateCameraToImage()
+    result, markerToSensor = self.logic.calculateMarkerToSensor()
     string = ""
 
     if result:
-      self.cameraSelector.currentNode().SetAndObserveMarkerToImageSensorTransform(cameraToImage)
+      self.cameraSelector.currentNode().SetAndObserveMarkerToImageSensorTransform(markerToSensor)
 
-      string = "Registration complete. Error: " + str(self.logic.getErrorCameraToImage())
+      string = "Registration complete. Error: " + str(self.logic.getErrorMarkerToSensor())
     else:
       string = "Registration failed."
 
-    return result, cameraToImage, string
+    return result, markerToSensor, string
 
   def removeMarkup(self):
     if self.tempMarkupNode is not None:
@@ -703,7 +711,7 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
   def addPointLinePair(self, point, lineOrigin, lineDirection):
     self.pointToLineRegistrationLogic.AddPointAndLine(point, lineOrigin, lineDirection)
 
-  def calculateCameraToImage(self):
+  def calculateMarkerToSensor(self):
     mat = self.pointToLineRegistrationLogic.CalculateRegistration()
     eye = vtk.vtkMatrix4x4()
     eye.Identity()
@@ -713,13 +721,13 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
           return True, mat
     return False, mat
 
-  def resetCameraToImage(self):
+  def resetMarkerToSensor(self):
     self.pointToLineRegistrationLogic.Reset()
 
-  def countCameraToImage(self):
+  def countMarkerToSensor(self):
     return self.pointToLineRegistrationLogic.GetCount()
 
-  def getErrorCameraToImage(self):
+  def getErrorMarkerToSensor(self):
     return self.pointToLineRegistrationLogic.GetError()
 
 # CameraCalibrationTest
