@@ -87,7 +87,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     self.logic = CameraCalibrationLogic()
 
-    self.debugMode = False
     self.canSelectFiducials = True
     self.isManualCapturing = False
     self.rayList = []
@@ -107,12 +106,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Inputs
     self.imageSelector = None
-    self.cameraTransformSelector = None
     self.stylusTipTransformSelector = None
 
-    self.cameraTransformNode = None
     self.stylusTipTransformNode = None
-    self.cameraTransformObserverTag = None
     self.stylusTipTransformObserverTag = None
 
     self.okPixmap = CameraCalibrationWidget.loadPixmap('icon_Ok', 20, 20)
@@ -129,7 +125,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.resetPtLButton = None
     self.trackerResultsLabel = None
     self.captureCountSpinBox = None
-    self.cameraTransformStatusLabel = None
     self.stylusTipTransformStatusLabel = None
 
     # Intrinsics
@@ -153,8 +148,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.sceneObserverTag = None
     self.tempMarkupNode = None
     self.cameraOriginInReference = None
-    self.stylusTipToCamera = None
-    self.cameraToReference = None
+    self.stylusTipToCamera = vtk.vtkMatrix4x4()
     self.IdentityMatrix = vtk.vtkMatrix4x4()
 
   def setup(self):
@@ -178,7 +172,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       # Inputs
       self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
-      self.cameraTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_CameraTransform")
       self.stylusTipTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_StylusTipSelector")
 
       # Tracker calibration members
@@ -195,7 +188,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.resetPtLButton = CameraCalibrationWidget.get(self.widget, "pushButton_resetPtL")
       self.trackerResultsLabel = CameraCalibrationWidget.get(self.widget, "label_TrackerResultsValue")
       self.captureCountSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_captureCount")
-      self.cameraTransformStatusLabel = CameraCalibrationWidget.get(self.widget, "label_CameraToReference_Status")
       self.stylusTipTransformStatusLabel = CameraCalibrationWidget.get(self.widget, "label_StylusTipToCamera_Status")
 
       # Intrinsic calibration members
@@ -222,12 +214,10 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # UI file method does not do mrml scene connections, do them manually
       self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
       self.imageSelector.setMRMLScene(slicer.mrmlScene)
-      self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
       self.stylusTipTransformSelector.setMRMLScene(slicer.mrmlScene)
 
       # Inputs
       self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-      self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraTransformSelected)
       self.stylusTipTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onStylusTipTransformSelected)
 
       # Connections
@@ -277,7 +267,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.captureCountSpinBox.disconnect('valueChanged(int)', self.onCaptureCountChanged)
 
     self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.stylusTipTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     self.manualButton.disconnect('clicked(bool)', self.onManualButton)
@@ -338,7 +327,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # Check pixel spacing, x and y must be 1px = 1mm in order for markups to produce correct pixel locations
       spacing = self.imageSelector.currentNode().GetImageData().GetSpacing()
       if spacing[0] != 1.0 or spacing[1] != 1.0:
-        logging.error("Image does not have 1.0 spacing in x or y, markup fiducials will not represent pixels exactly!")
+        self.labelResult.text = "Image does not have 1.0 spacing in x or y, markup fiducials will not represent pixels exactly! Cannot proceed."
         self.canSelectFiducials = False
       else:
         self.canSelectFiducials = True
@@ -400,17 +389,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.asymmetricButton.enabled = True
       self.clusteringButton.enabled = True
 
-  def onCameraTransformSelected(self):
-    if self.cameraTransformObserverTag is not None:
-      self.cameraTransformNode.RemoveObserver(self.cameraTransformObserverTag)
-      self.cameraTransformObserverTag = None
-
-    self.cameraTransformNode = self.cameraTransformSelector.currentNode()
-    if self.cameraTransformNode is not None:
-      self.cameraTransformObserverTag = self.cameraTransformNode.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onCameraTransformModified)
-
-    self.onSelect()
-
   def onStylusTipTransformSelected(self):
     if self.stylusTipTransformObserverTag is not None:
       self.stylusTipTransformNode.RemoveObserver(self.stylusTipTransformObserverTag)
@@ -423,22 +401,15 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.onSelect()
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
-  def onCameraTransformModified(self, caller, event):
-    mat = vtk.vtkMatrix4x4()
-    self.cameraTransformNode.GetMatrixTransformToParent(mat)
-    if CameraCalibrationWidget.areSameVTK4x4(mat, self.IdentityMatrix):
-      self.cameraTransformStatusLabel.setPixmap(self.notOkPixmap)
-    else:
-      self.cameraTransformStatusLabel.setPixmap(self.okPixmap)
-
-  @vtk.calldata_type(vtk.VTK_OBJECT)
   def onStylusTipTransformModified(self, caller, event):
     mat = vtk.vtkMatrix4x4()
     self.stylusTipTransformNode.GetMatrixTransformToParent(mat)
     if CameraCalibrationWidget.areSameVTK4x4(mat, self.IdentityMatrix):
       self.stylusTipTransformStatusLabel.setPixmap(self.notOkPixmap)
+      self.manualButton.enabled = False
     else:
       self.stylusTipTransformStatusLabel.setPixmap(self.okPixmap)
+      self.manualButton.enabled = True
 
   def onSelect(self):
     self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None \
@@ -448,7 +419,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
                                        and self.cameraSelector.currentNode() is not None
 
     self.trackerContainer.enabled = self.imageSelector.currentNode() is not None \
-                                    and self.cameraTransformSelector.currentNode() is not None \
                                     and self.stylusTipTransformSelector.currentNode() is not None \
                                     and self.cameraSelector.currentNode() is not None \
                                     and self.canSelectFiducials
@@ -488,6 +458,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       slicer.modules.annotations.logic().StopPlaceMode()
       return()
 
+    # Record tracker data at time of freeze and store
+    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(self.stylusTipToCamera)
+
     # Make a copy of the volume node (aka freeze cv capture) to allow user to play with detection parameters or click on center
     self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
     self.copyNode = slicer.mrmlScene.CopyNode(self.centerFiducialSelectionNode)
@@ -499,15 +472,6 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     # Initiate fiducial selection
     slicer.modules.markups.logic().StartPlaceMode(False)
-
-    # Record tracker data at time of freeze and store
-    mat = vtk.vtkMatrix4x4()
-    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(mat)
-    self.stylusTipToCamera = mat
-    cameraToReferenceVtk = vtk.vtkMatrix4x4()
-    self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
-    self.cameraToReference = CameraCalibrationWidget.vtk4x4ToNumpy(cameraToReferenceVtk)
-    self.cameraOriginInReference = [cameraToReferenceVtk.GetElement(0, 3), cameraToReferenceVtk.GetElement(1, 3), cameraToReferenceVtk.GetElement(2, 3)]
 
     # Disable input changing while capture is active
     self.inputsContainer.setEnabled(False)
@@ -565,7 +529,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       if self.logic.countMarkerToSensor() >= self.captureCountSpinBox.value:
         result, cameraToImage, string = self.calcRegAndBuildString()
-        if result and self.debugMode:
+        if result and self.developerMode:
           for combination in self.rayList:
             print "x: ", combination[0]
             print "origin: ", combination[1]
@@ -733,7 +697,6 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
 # CameraCalibrationTest
 class CameraCalibrationTest(ScriptedLoadableModuleTest):
   def setUp(self):
-    """ Do whatever is needed to reset the state - typically a scene clear will be enough. """
     slicer.mrmlScene.Clear(0)
 
   def test_CameraCalibration1(self):
@@ -741,6 +704,5 @@ class CameraCalibrationTest(ScriptedLoadableModuleTest):
     self.delayDisplay('Test passed!')
 
   def runTest(self):
-    """ Run as few or as many tests as needed here. """
     self.setUp()
     self.test_CameraCalibration1()

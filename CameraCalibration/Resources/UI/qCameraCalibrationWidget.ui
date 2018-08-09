@@ -44,7 +44,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="1" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBox_StylusTipSelector">
         <property name="nodeTypes">
          <stringlist>
@@ -65,10 +65,10 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_CameraTransform">
+      <item row="1" column="2">
+       <widget class="QLabel" name="label_StylusTipToCamera_Status">
         <property name="text">
-         <string>CameraToReference:</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -79,45 +79,10 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="qMRMLNodeComboBox" name="comboBox_CameraTransform">
-        <property name="nodeTypes">
-         <stringlist>
-          <string>vtkMRMLLinearTransformNode</string>
-         </stringlist>
-        </property>
-        <property name="noneEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="renameEnabled">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_stylusTransform">
         <property name="text">
          <string>StylusTipToCamera:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="label_CameraToReference_Status">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_StylusTipToCamera_Status">
-        <property name="text">
-         <string/>
         </property>
        </widget>
       </item>
@@ -878,26 +843,27 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qMRMLWebcamIntrinsicsWidget</class>
-   <extends>qSlicerWidget</extends>
-   <header>qMRMLWebcamIntrinsicsWidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
    <header>ctkCollapsibleButton.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLWebcamIntrinsicsWidget</class>
+   <extends>qSlicerWidget</extends>
+   <header>qMRMLWebcamIntrinsicsWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_ProcessMode"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
   <buttongroup name="buttonGroup_CircleGridMethod"/>
+  <buttongroup name="buttonGroup_ProcessMode"/>
  </buttongroups>
 </ui>

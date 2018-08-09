@@ -96,7 +96,6 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
     self.logic = CameraRayIntersectionLogic()
 
-    self.debugMode = False
     self.canSelectFiducials = False
     self.isManualCapturing = False
     self.validCamera = False
@@ -124,6 +123,8 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.cameraToReference = None
     self.cameraOriginInReference = None
 
+    self.identity3x3 = vtk.vtkMatrix3x3()
+    self.identity4x4 = vtk.vtkMatrix4x4()
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
@@ -138,65 +139,65 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       self.widget = slicer.util.loadUI(path)
       self.layout.addWidget(self.widget)
 
-      self.cameraIntrinWidget = CameraRayIntersectionWidget.get(self.widget, "cameraIntrinsicsWidget")
+    self.cameraIntrinWidget = CameraRayIntersectionWidget.get(self.widget, "cameraIntrinsicsWidget")
 
-      # Workaround for camera selector
-      self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
+    # Workaround for camera selector
+    self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
 
-      # Inputs/Outputs
-      self.imageSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_ImageSelector")
-      self.cameraTransformSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_CameraTransform")
-      self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
+    # Inputs/Outputs
+    self.imageSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_ImageSelector")
+    self.cameraTransformSelector = CameraRayIntersectionWidget.get(self.widget, "comboBox_CameraTransform")
+    self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
 
-      self.captureButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Capture")
-      self.resetButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Reset")
-      self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
+    self.captureButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Capture")
+    self.resetButton = CameraRayIntersectionWidget.get(self.widget, "pushButton_Reset")
+    self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
 
-      self.resultsLabel = CameraRayIntersectionWidget.get(self.widget, "label_Results")
+    self.resultsLabel = CameraRayIntersectionWidget.get(self.widget, "label_Results")
 
-      # Disable capture as image processing isn't active yet
-      self.actionContainer.setEnabled(False)
+    # Disable capture as image processing isn't active yet
+    self.actionContainer.setEnabled(False)
 
-      # UI file method does not do mrml scene connections, do them manually
-      self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
-      self.imageSelector.setMRMLScene(slicer.mrmlScene)
-      self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
+    # UI file method does not do mrml scene connections, do them manually
+    self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
+    self.imageSelector.setMRMLScene(slicer.mrmlScene)
+    self.cameraTransformSelector.setMRMLScene(slicer.mrmlScene)
 
-      # Connections
-      self.cameraSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
-      self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-      self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-      self.captureButton.connect('clicked(bool)', self.onCapture)
-      self.resetButton.connect('clicked(bool)', self.onReset)
+    # Connections
+    self.cameraSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
+    self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
+    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.captureButton.connect('clicked(bool)', self.onCapture)
+    self.resetButton.connect('clicked(bool)', self.onReset)
 
-      # Adding an observer to scene to listen for mrml node
-      self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
+    # Adding an observer to scene to listen for mrml node
+    self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
 
-      # Choose red slice only
-      lm = slicer.app.layoutManager()
-      lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
+    # Choose red slice only
+    lm = slicer.app.layoutManager()
+    lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
 
-      # Refresh Apply button state
-      self.onSelect()
+    # Refresh Apply button state
+    self.onSelect()
 
   def onCameraSelected(self):
     node = self.cameraSelector.currentNode()
     if node is not None:
+      self.validCamera = True
       string = ""
       # Check state of selected camera
-      if CameraRayIntersectionWidget.areSameVTK3x3(node.GetIntrinsicMatrix(), vtk.vtkMatrix3x3.Identity()):
+      if CameraRayIntersectionWidget.areSameVTK3x3(node.GetIntrinsicMatrix(), self.identity3x3):
         string += "No camera intrinsics! "
+        self.validCamera = False
       if CameraRayIntersectionWidget.emptyOrZeros(node.GetDistortionCoefficients()):
         string += "No distortion coefficients! "
-      if CameraRayIntersectionWidget.areSameVTK4x4(node.GetMarkerToImageSensorTransform(), vtk.vtkMatrix4x4.Identity()):
+        self.validCamera = False
+      if CameraRayIntersectionWidget.areSameVTK4x4(node.GetMarkerToImageSensorTransform(), self.identity4x4):
         string += "No tracker calibration performed! "
 
       if len(string) > 0:
         self.resultsLabel.text = string
         logging.error(string)
-        self.validCamera = False
-      else:
-        self.validCamera = True
 
   def cleanup(self):
     self.cameraSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
@@ -215,10 +216,10 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
       # Check pixel spacing, x and y must be 1px = 1mm in order for markups to produce correct pixel locations
       spacing = self.imageSelector.currentNode().GetImageData().GetSpacing()
-      if spacing[0] != 1.0 or spacing[1] != 0:
+      if spacing[0] != 1.0 or spacing[1] != 1.0:
         message = "Image does not have 1.0 spacing in x or y, markup fiducials will not represent pixels exactly!"
         logging.error(message)
-        self.resultsLabel = message
+        self.resultsLabel.text = message
         self.canSelectFiducials = False
       else:
         self.canSelectFiducials = True
@@ -226,7 +227,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.onSelect()
 
   def onReset(self):
-    self.labelResult.text = "Reset."
+    self.resultsLabel.text = "Reset."
     self.logic.reset()
 
   def onSelect(self):
@@ -241,6 +242,15 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       # Cancel button hit
       self.endManualCapturing()
       slicer.modules.annotations.logic().StopPlaceMode()
+      return()
+
+    # Record tracker data at time of freeze and store
+    cameraToReferenceVtk = vtk.vtkMatrix4x4()
+    self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
+    self.cameraToReference = CameraRayIntersectionWidget.vtk4x4ToNumpy(cameraToReferenceVtk)
+
+    if CameraRayIntersectionWidget.areSameVTK4x4(cameraToReferenceVtk, self.identity4x4):
+      self.resultsLabel.text = "Invalid transform. Please try again with sensor in view."
       return()
 
     # Reset view so that capture button always works
@@ -260,12 +270,6 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
     # Initiate fiducial selection
     slicer.modules.markups.logic().StartPlaceMode(False)
-
-    # Record tracker data at time of freeze and store
-    cameraToReferenceVtk = vtk.vtkMatrix4x4()
-    self.cameraTransformSelector.currentNode().GetMatrixTransformToParent(cameraToReferenceVtk)
-    self.cameraToReference = CameraRayIntersectionWidget.vtk4x4ToNumpy(cameraToReferenceVtk)
-    self.cameraOriginInReference = [cameraToReferenceVtk.GetElement(0, 3), cameraToReferenceVtk.GetElement(1, 3), cameraToReferenceVtk.GetElement(2, 3)]
 
     # Disable resetting while capture is active
     self.resetButton.setEnabled(False)
@@ -298,28 +302,28 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       pixel = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
 
       # Get the direction based on selected pixel
-      origin_sensor = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
+      origin_sensor = np.asmatrix([[0.0],[0.0],[0.0],[1.0]], dtype=np.float64)
       directionVec_sensor = (np.linalg.inv(mtx) * pixel) / np.linalg.norm(np.linalg.inv(mtx) * pixel)
+      directionVec_sensor = np.asmatrix([[directionVec_sensor[0,0]],[directionVec_sensor[1,0]],[directionVec_sensor[2,0]],[0.0]], dtype=np.float64)
 
-      # left multiply by marker to imagesensor^-1, then marker to reference
-      sensorToMarker = vtk.vtkMatrix4x4.Invert(self.cameraSelector.currentNode().GetMarkerToImageSensorTransform())
-      markerToReference = self.cameraTransformSelector.currentNode().GetMatrixTransformToParent()
+      sensorToCamera = CameraRayIntersectionWidget.vtk4x4ToNumpy(self.cameraSelector.currentNode().GetMarkerToImageSensorTransform())
+      sensorToCamera = np.linalg.inv(sensorToCamera)
 
-      sensorToRef = vtk.vtkTransform()
-      sensorToRef.PostMultiply()
-      sensorToRef.Identity();
-      sensorToRef.Concatenate(sensorToMarker)
-      sensorToRef.Concatenate(markerToReference)
-      mat = CameraRayIntersectionWidget.vtk4x4ToNumpy(sensorToRef.GetMatrix())
+      sensorToReference = self.cameraToReference * sensorToCamera
 
-      origin_ref = mat * origin_sensor
-      directionVec_ref = mat * directionVec_sensor
+      origin_ref = sensorToReference * origin_sensor
+      directionVec_ref = sensorToReference * directionVec_sensor
 
-      result = self.logic.addRay(origin_ref, directionVec_ref)
+      if self.developerMode:
+        logging.debug("origin: " + str(origin_ref).replace('\n',''))
+        logging.debug("dir: " + str(directionVec_ref).replace('\n',''))
+
+      result = self.logic.addRay([origin_ref[0,0], origin_ref[1,0], origin_ref[2,0]], [directionVec_ref[0,0], directionVec_ref[1,0], directionVec_ref[2,0]])
       if result is not None:
         self.resultsLabel.text = "Point: " + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + ". Error: " + str(self.logic.getError())
-        # For ease of copy pasting multiple entries, print it to the python console
-        print "Intersection|" + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + "|" + str(self.logic.getError())
+        if self.developerMode:
+          # For ease of copy pasting multiple entries, print it to the python console
+          print "Intersection|" + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + "|" + str(self.logic.getError())
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
@@ -359,6 +363,9 @@ class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):
       return self.linesRegistrationLogic.Update()
     return None
 
+  def getCount(self):
+    return self.linesRegistrationLogic.Count()
+
   def getPoint(self):
     if self.linesRegistrationLogic.Count() > 2:
       return self.linesRegistrationLogic.Update()
@@ -370,13 +377,11 @@ class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):
 # CameraRayIntersectionTest
 class CameraRayIntersectionTest(ScriptedLoadableModuleTest):
   def setUp(self):
-    """ Do whatever is needed to reset the state - typically a scene clear will be enough.
-    """
+    """ Do whatever is needed to reset the state - typically a scene clear will be enough. """
     slicer.mrmlScene.Clear(0)
 
   def runTest(self):
-    """Run as few or as many tests as needed here.
-    """
+    """ Run as few or as many tests as needed here. """
     self.setUp()
     self.test_CameraRayIntersection1()
 

@@ -343,6 +343,7 @@ void qMRMLWebcamIntrinsicsWidget::onIntrinsicItemChanged(QTableWidgetItem* item)
   double value = item->text().toDouble(&ok);
   if (ok)
   {
+    int mod = this->CurrentNode->StartModify();
     if (this->CurrentNode->GetIntrinsicMatrix() == nullptr)
     {
       vtkSmartPointer<vtkMatrix3x3> mat = vtkSmartPointer<vtkMatrix3x3>::New();
@@ -353,6 +354,7 @@ void qMRMLWebcamIntrinsicsWidget::onIntrinsicItemChanged(QTableWidgetItem* item)
     this->CurrentNode->RemoveObserver(this->IntrinsicObserverTag);
     this->CurrentNode->GetIntrinsicMatrix()->SetElement(item->row(), item->column(), value);
     this->IntrinsicObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::IntrinsicsModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeIntrinsicsModified);
+    this->CurrentNode->EndModify(mod);
   }
 }
 
@@ -366,6 +368,7 @@ void qMRMLWebcamIntrinsicsWidget::onDistortionItemChanged(QTableWidgetItem* item
 
   if (ok)
   {
+    int mod = this->CurrentNode->StartModify();
     if (this->CurrentNode->GetDistortionCoefficients() == nullptr)
     {
       vtkSmartPointer<vtkDoubleArray> arr = vtkSmartPointer<vtkDoubleArray>::New();
@@ -377,6 +380,7 @@ void qMRMLWebcamIntrinsicsWidget::onDistortionItemChanged(QTableWidgetItem* item
     this->CurrentNode->RemoveObserver(this->DistortionObserverTag);
     this->CurrentNode->GetDistortionCoefficients()->SetValue(item->column(), value);
     this->DistortionObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
+    this->CurrentNode->EndModify(mod);
   }
 }
 
@@ -390,6 +394,7 @@ void qMRMLWebcamIntrinsicsWidget::onMarkerTransformItemChanged(QTableWidgetItem*
 
   if (ok)
   {
+    int mod = this->CurrentNode->StartModify();
     if (this->CurrentNode->GetMarkerToImageSensorTransform() == nullptr)
     {
       vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
@@ -400,6 +405,7 @@ void qMRMLWebcamIntrinsicsWidget::onMarkerTransformItemChanged(QTableWidgetItem*
     this->CurrentNode->RemoveObserver(this->MarkerTransformObserverTag);
     this->CurrentNode->GetMarkerToImageSensorTransform()->SetElement(item->row(), item->column(), value);
     this->MarkerTransformObserverTag = this->CurrentNode->AddObserver(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent, this, &qMRMLWebcamIntrinsicsWidget::OnNodeMarkerTransformModified);
+    this->CurrentNode->EndModify(mod);
   }
 }
 
