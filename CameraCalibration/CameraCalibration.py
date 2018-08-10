@@ -522,7 +522,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # And add it to the list!
       self.logic.addPointLinePair(x, origin, directionVecNormalized)
 
-      if self.debugMode:
+      if self.developerMode:
         self.rayList.append([x, origin, directionVecNormalized])
 
       countString = str(self.logic.countMarkerToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
@@ -531,9 +531,9 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
         result, cameraToImage, string = self.calcRegAndBuildString()
         if result and self.developerMode:
           for combination in self.rayList:
-            print "x: ", combination[0]
-            print "origin: ", combination[1]
-            print "dir: ", combination[2]
+            logging.debug("x: " + str(combination[0]))
+            logging.debug("origin: " + str(combination[1]))
+            logging.debug("dir: " + str(combination[2]))
 
           trans = vtk.vtkTransform()
           trans.PostMultiply()
@@ -600,6 +600,7 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     self.terminationCriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
 
     self.pointToLineRegistrationLogic = slicer.vtkSlicerPointToLineRegistrationLogic()
+    self.pointToLineRegistrationLogic.SetLandmarkRegistrationModeToRigidBody()
 
   def setTerminationCriteria(self, criteria):
     self.terminationCriteria = criteria

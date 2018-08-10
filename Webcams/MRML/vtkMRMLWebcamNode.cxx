@@ -125,8 +125,6 @@ void vtkMRMLWebcamNode::OnIntrinsicsModified(vtkObject* caller, unsigned long ev
 {
   this->InvokeEvent(IntrinsicsModifiedEvent);
   this->Modified();
-
-  vtkErrorMacro("intrin mod");
 }
 
 //----------------------------------------------------------------------------
@@ -134,8 +132,6 @@ void vtkMRMLWebcamNode::OnDistortionCoefficientsModified(vtkObject* caller, unsi
 {
   this->InvokeEvent(DistortionCoefficientsModifiedEvent);
   this->Modified();
-
-  vtkErrorMacro("dist mod");
 }
 
 //----------------------------------------------------------------------------
@@ -143,8 +139,6 @@ void vtkMRMLWebcamNode::OnMarkerTransformModified(vtkObject* caller, unsigned lo
 {
   this->InvokeEvent(MarkerToSensorTransformModifiedEvent);
   this->Modified();
-
-  vtkErrorMacro("marker mod");
 }
 
 //----------------------------------------------------------------------------

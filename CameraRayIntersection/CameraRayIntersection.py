@@ -14,7 +14,7 @@ class CameraRayIntersection(ScriptedLoadableModule):
     self.parent.categories = ["Webcams"]
     self.parent.dependencies = ["Webcams", "LinesIntersection", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
-    self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles"""
+    self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles. """
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
     self.parent.acknowledgementText = ""
 
@@ -198,6 +198,10 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       if len(string) > 0:
         self.resultsLabel.text = string
         logging.error(string)
+      else:
+        self.resultsLabel.text = "Camera ok!"
+
+    self.onSelect()
 
   def cleanup(self):
     self.cameraSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
