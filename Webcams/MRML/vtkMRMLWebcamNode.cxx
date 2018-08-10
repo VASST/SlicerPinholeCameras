@@ -80,6 +80,8 @@ void vtkMRMLWebcamNode::SetAndObserveIntrinsicMatrix(vtkMatrix3x3* intrinsicMatr
   {
     this->IntrinsicObserverObserverTag = this->IntrinsicMatrix->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnIntrinsicsModified);
   }
+
+  this->InvokeEvent(vtkMRMLWebcamNode::IntrinsicsModifiedEvent);
 }
 
 //----------------------------------------------------------------------------
@@ -96,6 +98,8 @@ void vtkMRMLWebcamNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* dist
   {
     this->DistortionCoefficientsObserverTag = this->DistortionCoefficients->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnDistortionCoefficientsModified);
   }
+
+  this->InvokeEvent(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent);
 }
 
 //----------------------------------------------------------------------------
@@ -112,6 +116,8 @@ void vtkMRMLWebcamNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* 
   {
     this->MarkerTransformObserverTag = this->MarkerToImageSensorTransform->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLWebcamNode::OnMarkerTransformModified);
   }
+
+  this->InvokeEvent(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent);
 }
 
 //----------------------------------------------------------------------------

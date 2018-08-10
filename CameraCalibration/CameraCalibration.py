@@ -14,10 +14,8 @@ class CameraCalibration(ScriptedLoadableModule):
     self.parent.categories = ["Webcams"]
     self.parent.dependencies = ["Webcams", "PointToLineRegistration", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
-    self.parent.helpText = """Perform intrinsic and extrinsic camera calibration against an external tracker."""
-    self.parent.helpText += self.getDefaultModuleDocumentationLink()
-    self.parent.acknowledgementText = """This file was originally developed by Adam Rankin, Robarts Research Institute and was partially funded by NSERC."""
-
+    self.parent.helpText = """This module utilizes OpenCV camera calibration functions to perform intrinsic calibration and calibration to an external tracker using a tracked, calibrated stylus. """ + self.getDefaultModuleDocumentationLink()
+    self.parent.acknowledgementText = """This module was developed with support from the Natural Sciences and Engineering Research Council of Canada, the Canadian Foundation for Innovation, and the Virtual Augmentation and Simulation for Surgery and Therapy laboratory, Western University."""
 
 # CameraCalibrationWidget
 class CameraCalibrationWidget(ScriptedLoadableModuleWidget):

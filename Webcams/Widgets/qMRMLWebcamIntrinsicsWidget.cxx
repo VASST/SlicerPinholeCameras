@@ -494,7 +494,6 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
     return;
   }
   this->CurrentNode->SetAndObserveIntrinsicMatrix(tempMatrix);
-  this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::IntrinsicsModifiedEvent);
 
   // Marker to sensor calibration
   vtkNew<vtkMatrix4x4> tmpMatrix;
@@ -506,7 +505,6 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
     return;
   }
   this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(tmpMatrix);
-  this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::MarkerToSensorTransformModifiedEvent);
 
   // Distortion Coefficients
   vtkNew<vtkDoubleArray> tempArray;
@@ -517,7 +515,6 @@ void qMRMLWebcamIntrinsicsWidget::pasteData()
     return;
   }
   this->CurrentNode->SetAndObserveDistortionCoefficients(tempArray);
-  this->CurrentNode->InvokeEvent(vtkMRMLWebcamNode::DistortionCoefficientsModifiedEvent);
 }
 
 //----------------------------------------------------------------------------

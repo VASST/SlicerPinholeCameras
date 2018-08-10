@@ -14,9 +14,8 @@ class CameraRayIntersection(ScriptedLoadableModule):
     self.parent.categories = ["Webcams"]
     self.parent.dependencies = ["Webcams", "LinesIntersection", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
-    self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles. """
-    self.parent.helpText += self.getDefaultModuleDocumentationLink()
-    self.parent.acknowledgementText = ""
+    self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple camera angles. """ + self.getDefaultModuleDocumentationLink()
+    self.parent.acknowledgementText = """This module was developed with support from the Natural Sciences and Engineering Research Council of Canada, the Canadian Foundation for Innovation, and the Virtual Augmentation and Simulation for Surgery and Therapy laboratory, Western University."""
 
 # CameraRayIntersectionWidget
 class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
@@ -77,8 +76,14 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     for i in range(0, 3):
       for j in range(0, 3):
         val[i, j] = vtk3x3.GetElement(i, j)
-
     return val
+
+  @staticmethod
+  def loadPixmap(param, x, y):
+    iconPath = os.path.join(os.path.dirname(slicer.modules.cameracalibration.path), 'Resources/Icons/', param + ".png")
+    icon = qt.QIcon(iconPath)
+    return icon.pixmap(icon.actualSize(qt.QSize(x, y)))
+
   def __init__(self, parent):
     ScriptedLoadableModuleWidget.__init__(self, parent)
 
@@ -105,6 +110,15 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.widget = None
     self.cameraIntrinWidget = None
     self.cameraSelector = None
+    self.cameraNode = None
+    self.cameraObserverTag = None
+
+    self.cameraTransformNode = None
+    self.cameraTransformObserverTag = None
+    self.cameraTransformStatusLabel = None
+
+    self.okPixmap = CameraRayIntersectionWidget.loadPixmap('icon_Ok', 20, 20)
+    self.notOkPixmap = CameraRayIntersectionWidget.loadPixmap('icon_NotOk', 20, 20)
 
     # Inputs/Outputs
     self.imageSelector = None
@@ -121,7 +135,6 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.tempMarkupNode = None
     self.sceneObserverTag = None
     self.cameraToReference = None
-    self.cameraOriginInReference = None
 
     self.identity3x3 = vtk.vtkMatrix3x3()
     self.identity4x4 = vtk.vtkMatrix4x4()
@@ -154,6 +167,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.actionContainer = CameraRayIntersectionWidget.get(self.widget, "widget_ActionContainer")
 
     self.resultsLabel = CameraRayIntersectionWidget.get(self.widget, "label_Results")
+    self.cameraTransformStatusLabel = CameraRayIntersectionWidget.get(self.widget, "label_CameraTransform_Status")
 
     # Disable capture as image processing isn't active yet
     self.actionContainer.setEnabled(False)
@@ -166,7 +180,7 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     # Connections
     self.cameraSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
     self.imageSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.cameraTransformSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onCameraTransformSelected)
     self.captureButton.connect('clicked(bool)', self.onCapture)
     self.resetButton.connect('clicked(bool)', self.onReset)
 
@@ -181,36 +195,52 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.onSelect()
 
   def onCameraSelected(self):
-    node = self.cameraSelector.currentNode()
-    if node is not None:
-      self.validCamera = True
-      string = ""
-      # Check state of selected camera
-      if CameraRayIntersectionWidget.areSameVTK3x3(node.GetIntrinsicMatrix(), self.identity3x3):
-        string += "No camera intrinsics! "
-        self.validCamera = False
-      if CameraRayIntersectionWidget.emptyOrZeros(node.GetDistortionCoefficients()):
-        string += "No distortion coefficients! "
-        self.validCamera = False
-      if CameraRayIntersectionWidget.areSameVTK4x4(node.GetMarkerToImageSensorTransform(), self.identity4x4):
-        string += "No tracker calibration performed! "
+    if self.cameraNode is not None:
+      self.cameraNode.RemoveObserver(self.cameraObserverTag)
 
-      if len(string) > 0:
-        self.resultsLabel.text = string
-        logging.error(string)
-      else:
-        self.resultsLabel.text = "Camera ok!"
+    self.cameraNode = self.cameraSelector.currentNode()
 
-    self.onSelect()
+    if self.cameraNode is not None:
+      self.cameraObserverTag = self.cameraNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onCameraModified)
+
+    self.checkCamera()
 
   def cleanup(self):
     self.cameraSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onCameraSelected)
     self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
-    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    self.cameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onCameraTransformSelected)
     self.captureButton.disconnect('clicked(bool)', self.onCapture)
     self.resetButton.disconnect('clicked(bool)', self.onReset)
 
     slicer.mrmlScene.RemoveObserver(self.sceneObserverTag)
+
+  @vtk.calldata_type(vtk.VTK_OBJECT)
+  def onCameraModified(self, caller, event):
+    self.checkCamera()
+
+  def checkCamera(self):
+    if self.cameraNode is None:
+      self.validCamera = False
+      return()
+
+    self.validCamera = True
+    string = ""
+    # Check state of selected camera
+    if CameraRayIntersectionWidget.areSameVTK3x3(self.cameraNode.GetIntrinsicMatrix(), self.identity3x3):
+      string += "No camera intrinsics! "
+      self.validCamera = False
+    if CameraRayIntersectionWidget.emptyOrZeros(self.cameraNode.GetDistortionCoefficients()):
+      string += "No distortion coefficients! "
+      self.validCamera = False
+    if CameraRayIntersectionWidget.areSameVTK4x4(self.cameraNode.GetMarkerToImageSensorTransform(), self.identity4x4):
+      string += "No tracker calibration performed! "
+
+    if len(string) > 0:
+      self.resultsLabel.text = string
+    else:
+      self.resultsLabel.text = "Camera ok!"
+
+    self.onSelect()
 
   def onImageSelected(self):
     # Set red slice to the copy node
@@ -351,6 +381,28 @@ class CameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       self.tempMarkupNode.RemoveAllMarkups()
       slicer.mrmlScene.RemoveNode(self.tempMarkupNode)
       self.tempMarkupNode = None
+
+  def onCameraTransformSelected(self):
+    if self.cameraTransformObserverTag is not None:
+      self.cameraTransformNode.RemoveObserver(self.cameraTransformObserverTag)
+      self.cameraTransformObserverTag = None
+
+    self.cameraTransformNode = self.cameraTransformSelector.currentNode()
+    if self.cameraTransformNode is not None:
+      self.cameraTransformObserverTag = self.cameraTransformNode.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onCameraTransformModified)
+
+    self.onSelect()
+
+  @vtk.calldata_type(vtk.VTK_OBJECT)
+  def onCameraTransformModified(self, caller, event):
+    mat = vtk.vtkMatrix4x4()
+    self.cameraTransformNode.GetMatrixTransformToParent(mat)
+    if CameraRayIntersectionWidget.areSameVTK4x4(mat, self.identity4x4):
+      self.cameraTransformStatusLabel.setPixmap(self.notOkPixmap)
+      self.captureButton.enabled = False
+    else:
+      self.cameraTransformStatusLabel.setPixmap(self.okPixmap)
+      self.captureButton.enabled = True
 
 # CameraRayIntersectionLogic
 class CameraRayIntersectionLogic(ScriptedLoadableModuleLogic):

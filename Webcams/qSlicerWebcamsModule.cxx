@@ -72,13 +72,13 @@ qSlicerWebcamsModule::~qSlicerWebcamsModule()
 //-----------------------------------------------------------------------------
 QString qSlicerWebcamsModule::helpText() const
 {
-  return "This is a loadable module that can be bundled in an extension";
+  return "This module exposes the details and operations that can be performed on a webcam.";
 }
 
 //-----------------------------------------------------------------------------
 QString qSlicerWebcamsModule::acknowledgementText() const
 {
-  return "This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN";
+  return "This module was developed with support from the Natural Sciences and Engineering Research Council of Canada, the Canadian Foundation for Innovation, and the Virtual Augmentation and Simulation for Surgery and Therapy laboratory, Western University.";
 }
 
 //-----------------------------------------------------------------------------
