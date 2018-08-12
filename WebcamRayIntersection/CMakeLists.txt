@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-set(MODULE_NAME CameraCalibration)
+set(MODULE_NAME WebcamRayIntersection)
 
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS

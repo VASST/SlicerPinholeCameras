@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qCameraCalibrationWidget</class>
- <widget class="qSlicerWidget" name="qCameraCalibrationWidget">
+ <class>qWebcamCalibrationWidget</class>
+ <widget class="qSlicerWidget" name="qWebcamCalibrationWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Camera Calibration</string>
+   <string>Webcam Calibration</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0">
@@ -813,7 +813,7 @@
     </widget>
    </item>
    <item row="0" column="0">
-    <widget class="qMRMLWebcamIntrinsicsWidget" name="cameraIntrinsicsWidget"/>
+    <widget class="qMRMLWebcamIntrinsicsWidget" name="webcamIntrinsicsWidget"/>
    </item>
    <item row="5" column="0">
     <spacer name="verticalSpacer">
@@ -843,27 +843,27 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>ctkCollapsibleButton</class>
-   <extends>QWidget</extends>
-   <header>ctkCollapsibleButton.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>qMRMLWebcamIntrinsicsWidget</class>
    <extends>qSlicerWidget</extends>
    <header>qMRMLWebcamIntrinsicsWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkCollapsibleButton</class>
+   <extends>QWidget</extends>
+   <header>ctkCollapsibleButton.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
  <connections/>
  <buttongroups>
+  <buttongroup name="buttonGroup_ProcessMode"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
   <buttongroup name="buttonGroup_CircleGridMethod"/>
-  <buttongroup name="buttonGroup_ProcessMode"/>
  </buttongroups>
 </ui>

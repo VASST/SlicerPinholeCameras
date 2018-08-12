@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(SlicerCamera)
+project(Webcams)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "http://slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/SlicerCamera")
+set(EXTENSION_HOMEPAGE "https://github.com/VASST/SlicerWebcams")
 set(EXTENSION_CATEGORY "Webcams")
 set(EXTENSION_CONTRIBUTORS "Adam Rankin (Robarts Research Institute), Elvis Chen (Robarts Research Institute)")
-set(EXTENSION_DESCRIPTION "This extension contains modules for interacting with cameras (calibration, capture, etc...)")
-set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/SlicerCamera.png")
-set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/SlicerCamera/Screenshots/1.png")
-set(EXTENSION_DEPENDS "SlicerIGT;SlicerOpenCV;VASSTAlgorithms") # Specified as a space separated string, a list or 'NA' if any
-SET(EXTENSION_TAGS "NA") # Specified as a space separated string, a list or 'NA' if any
+set(EXTENSION_DESCRIPTION "This extension contains modules for interacting with still and video cameras (calibration, capture, etc...)")
+set(EXTENSION_ICONURL "https://github.com/VASST/SlicerCamera/blob/master/SlicerWebcams_128.png")
+set(EXTENSION_SCREENSHOTURLS "https://github.com/VASST/SlicerWebcams/blob/master/Documentation/screenshot.png")
+set(EXTENSION_DEPENDS "SlicerIGT;SlicerOpenCV;VASSTAlgorithms")
+SET(EXTENSION_TAGS "NA")
 
 #-----------------------------------------------------------------------------
 # Extension dependencies
@@ -30,8 +30,8 @@ mark_as_superbuild(VASSTAlgorithms_DIR)
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(Webcams)
-add_subdirectory(CameraCalibration)
-add_subdirectory(CameraRayIntersection)
+add_subdirectory(WebcamCalibration)
+add_subdirectory(WebcamRayIntersection)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

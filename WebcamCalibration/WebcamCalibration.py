@@ -6,26 +6,26 @@ import numpy as np
 import logging
 from slicer.ScriptedLoadableModule import ScriptedLoadableModule, ScriptedLoadableModuleWidget, ScriptedLoadableModuleLogic, ScriptedLoadableModuleTest
 
-# CameraCalibration
-class CameraCalibration(ScriptedLoadableModule):
+# WebcamCalibration
+class WebcamCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "Calibration"
+    self.parent.title = "Webcam Calibration"
     self.parent.categories = ["Webcams"]
     self.parent.dependencies = ["Webcams", "PointToLineRegistration", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """This module utilizes OpenCV camera calibration functions to perform intrinsic calibration and calibration to an external tracker using a tracked, calibrated stylus. """ + self.getDefaultModuleDocumentationLink()
     self.parent.acknowledgementText = """This module was developed with support from the Natural Sciences and Engineering Research Council of Canada, the Canadian Foundation for Innovation, and the Virtual Augmentation and Simulation for Surgery and Therapy laboratory, Western University."""
 
-# CameraCalibrationWidget
-class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
+# WebcamCalibrationWidget
+class WebcamCalibrationWidget(ScriptedLoadableModuleWidget):
   @staticmethod
   def get(widget, objectName):
     if widget.objectName == objectName:
       return widget
     else:
       for w in widget.children():
-        resulting_widget = CameraCalibrationWidget.get(w, objectName)
+        resulting_widget = WebcamCalibrationWidget.get(w, objectName)
         if resulting_widget:
           return resulting_widget
       return None
@@ -64,7 +64,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   @staticmethod
   def loadPixmap(param, x, y):
-    iconPath = os.path.join(os.path.dirname(slicer.modules.cameracalibration.path), 'Resources/Icons/', param + ".png")
+    iconPath = os.path.join(os.path.dirname(slicer.modules.webcamcalibration.path), 'Resources/Icons/', param + ".png")
     icon = qt.QIcon(iconPath)
     return icon.pixmap(icon.actualSize(qt.QSize(x, y)))
 
@@ -83,7 +83,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       logging.error("OpenCV2 python interface not available.")
       return
 
-    self.logic = CameraCalibrationLogic()
+    self.logic = WebcamCalibrationLogic()
 
     self.canSelectFiducials = True
     self.isManualCapturing = False
@@ -94,8 +94,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.imageGridNode = None
     self.trivialProducer = None
     self.widget = None
-    self.cameraIntrinWidget = None
-    self.cameraSelector = None
+    self.webcamIntrinWidget = None
+    self.webcamSelector = None
 
     self.inputsContainer = None
     self.trackerContainer = None
@@ -109,8 +109,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.stylusTipTransformNode = None
     self.stylusTipTransformObserverTag = None
 
-    self.okPixmap = CameraCalibrationWidget.loadPixmap('icon_Ok', 20, 20)
-    self.notOkPixmap = CameraCalibrationWidget.loadPixmap('icon_NotOk', 20, 20)
+    self.okPixmap = WebcamCalibrationWidget.loadPixmap('icon_Ok', 20, 20)
+    self.notOkPixmap = WebcamCalibrationWidget.loadPixmap('icon_NotOk', 20, 20)
 
     # Tracker
     self.manualButton = None
@@ -145,8 +145,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.objPattern = None
     self.sceneObserverTag = None
     self.tempMarkupNode = None
-    self.cameraOriginInReference = None
-    self.stylusTipToCamera = vtk.vtkMatrix4x4()
+    self.webcamOriginInReference = None
+    self.stylusTipToWebcam = vtk.vtkMatrix4x4()
     self.IdentityMatrix = vtk.vtkMatrix4x4()
 
   def setup(self):
@@ -163,54 +163,54 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.layout.addWidget(self.widget)
 
       # Nodes
-      self.cameraIntrinWidget = CameraCalibrationWidget.get(self.widget, "cameraIntrinsicsWidget")
+      self.webcamIntrinWidget = WebcamCalibrationWidget.get(self.widget, "webcamIntrinsicsWidget")
 
-      # Workaround for camera selector
-      self.cameraSelector = self.cameraIntrinWidget.children()[1].children()[1]
+      # Workaround for Webcam selector
+      self.webcamSelector = self.webcamIntrinWidget.children()[1].children()[1]
 
       # Inputs
-      self.imageSelector = CameraCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
-      self.stylusTipTransformSelector = CameraCalibrationWidget.get(self.widget, "comboBox_StylusTipSelector")
+      self.imageSelector = WebcamCalibrationWidget.get(self.widget, "comboBox_ImageSelector")
+      self.stylusTipTransformSelector = WebcamCalibrationWidget.get(self.widget, "comboBox_StylusTipSelector")
 
       # Tracker calibration members
-      self.inputsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
-      self.trackerContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Tracker")
-      self.intrinsicsContainer = CameraCalibrationWidget.get(self.widget, "collapsibleButton_Intrinsics")
-      self.manualButton = CameraCalibrationWidget.get(self.widget, "pushButton_Manual")
-      self.semiAutoButton = CameraCalibrationWidget.get(self.widget, "pushButton_SemiAuto")
-      self.autoButton = CameraCalibrationWidget.get(self.widget, "pushButton_Automatic")
-      self.manualModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Manual")
-      self.semiAutoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
-      self.autoModeButton = CameraCalibrationWidget.get(self.widget, "radioButton_Automatic")
-      self.autoSettingsContainer = CameraCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
-      self.resetPtLButton = CameraCalibrationWidget.get(self.widget, "pushButton_resetPtL")
-      self.trackerResultsLabel = CameraCalibrationWidget.get(self.widget, "label_TrackerResultsValue")
-      self.captureCountSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_captureCount")
-      self.stylusTipTransformStatusLabel = CameraCalibrationWidget.get(self.widget, "label_StylusTipToCamera_Status")
+      self.inputsContainer = WebcamCalibrationWidget.get(self.widget, "collapsibleButton_Inputs")
+      self.trackerContainer = WebcamCalibrationWidget.get(self.widget, "collapsibleButton_Tracker")
+      self.intrinsicsContainer = WebcamCalibrationWidget.get(self.widget, "collapsibleButton_Intrinsics")
+      self.manualButton = WebcamCalibrationWidget.get(self.widget, "pushButton_Manual")
+      self.semiAutoButton = WebcamCalibrationWidget.get(self.widget, "pushButton_SemiAuto")
+      self.autoButton = WebcamCalibrationWidget.get(self.widget, "pushButton_Automatic")
+      self.manualModeButton = WebcamCalibrationWidget.get(self.widget, "radioButton_Manual")
+      self.semiAutoModeButton = WebcamCalibrationWidget.get(self.widget, "radioButton_SemiAuto")
+      self.autoModeButton = WebcamCalibrationWidget.get(self.widget, "radioButton_Automatic")
+      self.autoSettingsContainer = WebcamCalibrationWidget.get(self.widget, "groupBox_AutoSettings")
+      self.resetPtLButton = WebcamCalibrationWidget.get(self.widget, "pushButton_resetPtL")
+      self.trackerResultsLabel = WebcamCalibrationWidget.get(self.widget, "label_TrackerResultsValue")
+      self.captureCountSpinBox = WebcamCalibrationWidget.get(self.widget, "spinBox_captureCount")
+      self.stylusTipTransformStatusLabel = WebcamCalibrationWidget.get(self.widget, "label_StylusTipToWebcam_Status")
 
       # Intrinsic calibration members
-      self.capIntrinsicButton = CameraCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
-      self.resetButton = CameraCalibrationWidget.get(self.widget, "pushButton_Reset")
-      self.intrinsicCheckerboardButton = CameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCheckerboard")
-      self.intrinsicCircleGridButton = CameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
-      self.columnsSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_Columns")
-      self.rowsSpinBox = CameraCalibrationWidget.get(self.widget, "spinBox_Rows")
-      self.squareSizeEdit = CameraCalibrationWidget.get(self.widget, "lineEdit_SquareSize")
-      self.adaptiveThresholdButton = CameraCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
-      self.normalizeImageButton = CameraCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
-      self.filterQuadsButton = CameraCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
-      self.fastCheckButton = CameraCalibrationWidget.get(self.widget, "checkBox_FastCheck")
-      self.symmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
-      self.asymmetricButton = CameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
-      self.clusteringButton = CameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
-      self.labelResult = CameraCalibrationWidget.get(self.widget, "label_ResultValue")
+      self.capIntrinsicButton = WebcamCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
+      self.resetButton = WebcamCalibrationWidget.get(self.widget, "pushButton_Reset")
+      self.intrinsicCheckerboardButton = WebcamCalibrationWidget.get(self.widget, "radioButton_IntrinsicCheckerboard")
+      self.intrinsicCircleGridButton = WebcamCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
+      self.columnsSpinBox = WebcamCalibrationWidget.get(self.widget, "spinBox_Columns")
+      self.rowsSpinBox = WebcamCalibrationWidget.get(self.widget, "spinBox_Rows")
+      self.squareSizeEdit = WebcamCalibrationWidget.get(self.widget, "lineEdit_SquareSize")
+      self.adaptiveThresholdButton = WebcamCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
+      self.normalizeImageButton = WebcamCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
+      self.filterQuadsButton = WebcamCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
+      self.fastCheckButton = WebcamCalibrationWidget.get(self.widget, "checkBox_FastCheck")
+      self.symmetricButton = WebcamCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
+      self.asymmetricButton = WebcamCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
+      self.clusteringButton = WebcamCalibrationWidget.get(self.widget, "radioButton_Clustering")
+      self.labelResult = WebcamCalibrationWidget.get(self.widget, "label_ResultValue")
 
       # Disable capture as image processing isn't active yet
       self.trackerContainer.setEnabled(False)
       self.intrinsicsContainer.setEnabled(False)
 
       # UI file method does not do mrml scene connections, do them manually
-      self.cameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
+      self.webcamIntrinWidget.setMRMLScene(slicer.mrmlScene)
       self.imageSelector.setMRMLScene(slicer.mrmlScene)
       self.stylusTipTransformSelector.setMRMLScene(slicer.mrmlScene)
 
@@ -298,18 +298,18 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
     if ret:
       self.labelResult.text = "Success (" + str(self.logic.countIntrinsics()) + ")"
-      done, error, mtx, dist = self.logic.calibrateCamera()
+      done, error, mtx, dist = self.logic.calibrateWebcam()
       if done:
-        self.cameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
-        self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
+        self.webcamIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
+        self.webcamIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
     else:
       self.labelResult.text = "Failure."
 
   def onReset(self):
     self.logic.resetIntrinsic()
     self.labelResult.text = "Reset."
-    self.cameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3.Identity())
-    self.cameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
+    self.webcamIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3.Identity())
+    self.webcamIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
 
   def onResetPtL(self):
     self.rayList = []
@@ -338,7 +338,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     result = False
 
     if self.logic.countMarkerToSensor() >= self.captureCountSpinBox.value:
-      result, cameraToImage, string = self.calcRegAndBuildString()
+      result, webcamToImage, string = self.calcRegAndBuildString()
 
     if result:
       self.trackerResultsLabel.text = countString + " " + string
@@ -402,7 +402,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onStylusTipTransformModified(self, caller, event):
     mat = vtk.vtkMatrix4x4()
     self.stylusTipTransformNode.GetMatrixTransformToParent(mat)
-    if CameraCalibrationWidget.areSameVTK4x4(mat, self.IdentityMatrix):
+    if WebcamCalibrationWidget.areSameVTK4x4(mat, self.IdentityMatrix):
       self.stylusTipTransformStatusLabel.setPixmap(self.notOkPixmap)
       self.manualButton.enabled = False
     else:
@@ -411,14 +411,14 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   def onSelect(self):
     self.capIntrinsicButton.enabled = self.imageSelector.currentNode() is not None \
-                                      and self.cameraSelector.currentNode() is not None
+                                      and self.webcamSelector.currentNode() is not None
 
     self.intrinsicsContainer.enabled = self.imageSelector.currentNode() is not None \
-                                       and self.cameraSelector.currentNode() is not None
+                                       and self.webcamSelector.currentNode() is not None
 
     self.trackerContainer.enabled = self.imageSelector.currentNode() is not None \
                                     and self.stylusTipTransformSelector.currentNode() is not None \
-                                    and self.cameraSelector.currentNode() is not None \
+                                    and self.webcamSelector.currentNode() is not None \
                                     and self.canSelectFiducials
 
   def onProcessingModeChanged(self):
@@ -457,7 +457,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       return()
 
     # Record tracker data at time of freeze and store
-    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(self.stylusTipToCamera)
+    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(self.stylusTipToWebcam)
 
     # Make a copy of the volume node (aka freeze cv capture) to allow user to play with detection parameters or click on center
     self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
@@ -490,17 +490,17 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       point[0,0,0] = abs(arr[0])
       point[0,0,1] = abs(arr[1])
 
-      # Get camera parameters
+      # Get Webcam parameters
       # Convert vtk to numpy
-      mtx = CameraCalibrationWidget.vtk3x3ToNumpy(self.cameraSelector.currentNode().GetIntrinsicMatrix())
+      mtx = WebcamCalibrationWidget.vtk3x3ToNumpy(self.webcamSelector.currentNode().GetIntrinsicMatrix())
 
-      dist = np.asarray(np.zeros((1, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-      for i in range(0, self.cameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-        dist[0, i] = self.cameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      dist = np.asarray(np.zeros((1, self.webcamSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+      for i in range(0, self.webcamSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+        dist[0, i] = self.webcamSelector.currentNode().GetDistortionCoefficients().GetValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 
-      x = [self.stylusTipToCamera.GetElement(0, 3), self.stylusTipToCamera.GetElement(1, 3), self.stylusTipToCamera.GetElement(2, 3)]
+      x = [self.stylusTipToWebcam.GetElement(0, 3), self.stylusTipToWebcam.GetElement(1, 3), self.stylusTipToWebcam.GetElement(2, 3)]
 
       # Origin - always 0, 0, 0
       origin = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
@@ -509,7 +509,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
       pixel = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
 
-      # Find the inverse of the camera intrinsic param matrix
+      # Find the inverse of the webcam intrinsic param matrix
       # Calculate direction vector by multiplying the inverse of the
       # intrinsic param matrix by the pixel
       directionVec = np.linalg.inv(mtx) * pixel
@@ -526,7 +526,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
       countString = str(self.logic.countMarkerToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
 
       if self.logic.countMarkerToSensor() >= self.captureCountSpinBox.value:
-        result, cameraToImage, string = self.calcRegAndBuildString()
+        result, webcamToImage, string = self.calcRegAndBuildString()
         if result and self.developerMode:
           for combination in self.rayList:
             logging.debug("x: " + str(combination[0]))
@@ -536,8 +536,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
           trans = vtk.vtkTransform()
           trans.PostMultiply()
           trans.Identity()
-          trans.Concatenate(self.stylusTipToCamera)
-          trans.Concatenate(cameraToImage)
+          trans.Concatenate(self.stylusTipToWebcam)
+          trans.Concatenate(webcamToImage)
 
           posePosition = trans.GetPosition()
 
@@ -563,7 +563,7 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
     string = ""
 
     if result:
-      self.cameraSelector.currentNode().SetAndObserveMarkerToImageSensorTransform(markerToSensor)
+      self.webcamSelector.currentNode().SetAndObserveMarkerToImageSensorTransform(markerToSensor)
 
       string = "Registration complete. Error: " + str(self.logic.getErrorMarkerToSensor())
     else:
@@ -583,8 +583,8 @@ class CameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onAutoButton(self):
     pass
 
-# CameraCalibrationLogic
-class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
+# WebcamCalibrationLogic
+class WebcamCalibrationLogic(ScriptedLoadableModuleLogic):
   def __init__(self):
     self.objectPoints = []
     self.imagePoints = []
@@ -651,11 +651,11 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
     if ret:
       self.objectPoints.append(self.objPattern)
       self.imagePoints.append(centers)
-      self.calibrateCamera()
+      self.calibrateWebcam()
 
     return ret
 
-  def calibrateCamera(self):
+  def calibrateWebcam(self):
     if len(self.imagePoints) > 0:
       ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objectPoints, self.imagePoints, self.imageSize, None, None)
       mat = vtk.vtkMatrix3x3()
@@ -693,15 +693,15 @@ class CameraCalibrationLogic(ScriptedLoadableModuleLogic):
   def getErrorMarkerToSensor(self):
     return self.pointToLineRegistrationLogic.GetError()
 
-# CameraCalibrationTest
-class CameraCalibrationTest(ScriptedLoadableModuleTest):
+# WebcamCalibrationTest
+class WebcamCalibrationTest(ScriptedLoadableModuleTest):
   def setUp(self):
     slicer.mrmlScene.Clear(0)
 
-  def test_CameraCalibration1(self):
+  def test_WebcamCalibration1(self):
     self.delayDisplay("Starting the test")
     self.delayDisplay('Test passed!')
 
   def runTest(self):
     self.setUp()
-    self.test_CameraCalibration1()
+    self.test_WebcamCalibration1()
