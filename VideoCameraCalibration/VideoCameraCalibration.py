@@ -186,7 +186,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.resetPtLButton = VideoCameraCalibrationWidget.get(self.widget, "pushButton_resetPtL")
       self.trackerResultsLabel = VideoCameraCalibrationWidget.get(self.widget, "label_TrackerResultsValue")
       self.captureCountSpinBox = VideoCameraCalibrationWidget.get(self.widget, "spinBox_captureCount")
-      self.stylusTipTransformStatusLabel = VideoCameraCalibrationWidget.get(self.widget, "label_StylusTipToVideoCamera_Status")
+      self.stylusTipTransformStatusLabel = VideoCameraCalibrationWidget.get(self.widget, "label_StylusTipToCamera_Status")
 
       # Intrinsic calibration members
       self.capIntrinsicButton = VideoCameraCalibrationWidget.get(self.widget, "pushButton_CaptureIntrinsic")
