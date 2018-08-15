@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>qMRMLVideoCameraIntrinsicsWidget</class>
+ <widget class="QWidget" name="qMRMLVideoCameraIntrinsicsWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>677</width>
+    <height>480</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="ctkCollapsibleButton" name="collapsibleButton_Camera">
+     <property name="text">
+      <string>Camera</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>6</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="qMRMLNodeComboBox" name="comboBox_CameraSelector">
+        <property name="nodeTypes">
+         <stringlist>
+          <string>vtkMRMLVideoCameraNode</string>
+         </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="renameEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ctkCollapsibleButton" name="collapsibleButton_Details">
+        <property name="text">
+         <string>Details</string>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_IntrinMatrix">
+           <property name="text">
+            <string>Intrinsics Matrix:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QTableWidget" name="tableWidget_CameraMatrix">
+           <property name="gridStyle">
+            <enum>Qt::DotLine</enum>
+           </property>
+           <property name="rowCount">
+            <number>3</number>
+           </property>
+           <property name="columnCount">
+            <number>3</number>
+           </property>
+           <attribute name="horizontalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="verticalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <row/>
+           <row/>
+           <row/>
+           <column/>
+           <column/>
+           <column/>
+           <item row="0" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_DistCoeffs">
+           <property name="text">
+            <string>Distortion Coefficients:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QTableWidget" name="tableWidget_DistCoeffs">
+           <property name="gridStyle">
+            <enum>Qt::DotLine</enum>
+           </property>
+           <property name="rowCount">
+            <number>1</number>
+           </property>
+           <property name="columnCount">
+            <number>5</number>
+           </property>
+           <attribute name="horizontalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="verticalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <row/>
+           <column/>
+           <column/>
+           <column/>
+           <column/>
+           <column/>
+           <item row="0" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="3">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="4">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_Tracker">
+           <property name="text">
+            <string>MarkerToImageSensor:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QTableWidget" name="tableWidget_MarkerToImageSensor">
+           <property name="gridStyle">
+            <enum>Qt::DotLine</enum>
+           </property>
+           <property name="rowCount">
+            <number>4</number>
+           </property>
+           <property name="columnCount">
+            <number>4</number>
+           </property>
+           <attribute name="horizontalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="verticalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <row/>
+           <row/>
+           <row/>
+           <row/>
+           <column/>
+           <column/>
+           <column/>
+           <column/>
+           <item row="0" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="0" column="3">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="1" column="3">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="2" column="3">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="3" column="0">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="3" column="1">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="3" column="2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+           <item row="3" column="3">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignTrailing|AlignVCenter</set>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>qMRMLNodeComboBox</class>
+   <extends>QWidget</extends>
+   <header>qMRMLNodeComboBox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ctkCollapsibleButton</class>
+   <extends>QWidget</extends>
+   <header>ctkCollapsibleButton.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
