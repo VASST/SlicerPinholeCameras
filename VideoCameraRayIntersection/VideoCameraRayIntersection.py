@@ -80,7 +80,7 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
   @staticmethod
   def loadPixmap(param, x, y):
-    iconPath = os.path.join(os.path.dirname(slicer.modules.videoCameracalibration.path), 'Resources/Icons/', param + ".png")
+    iconPath = os.path.join(os.path.dirname(slicer.modules.videocameracalibration.path), 'Resources/Icons/', param + ".png")
     icon = qt.QIcon(iconPath)
     return icon.pixmap(icon.actualSize(qt.QSize(x, y)))
 

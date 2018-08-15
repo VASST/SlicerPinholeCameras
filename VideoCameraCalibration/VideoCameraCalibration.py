@@ -64,7 +64,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
   @staticmethod
   def loadPixmap(param, x, y):
-    iconPath = os.path.join(os.path.dirname(slicer.modules.videoCameracalibration.path), 'Resources/Icons/', param + ".png")
+    iconPath = os.path.join(os.path.dirname(slicer.modules.videocameracalibration.path), 'Resources/Icons/', param + ".png")
     icon = qt.QIcon(iconPath)
     return icon.pixmap(icon.actualSize(qt.QSize(x, y)))
 
@@ -303,6 +303,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
         string += ". Calibration reprojection error: " + str(error)
+        logging.info("Calibration reprojection error: " + str(error))
       self.labelResult.text = string
     else:
       self.labelResult.text = "Failure."
@@ -677,11 +678,10 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
         pts.InsertNextValue(dist[0,i])
 
       mean_error = 0
-      for i in xrange(len(self.objectPoints)):
+      for i in range(len(self.objectPoints)):
         imgpoints2, _ = cv2.projectPoints(self.objectPoints[i], rvecs[i], tvecs[i], mtx, dist)
-        error = cv2.norm(self.imagePoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+        error = cv2.norm(self.imagePoints[i], imgpoints2.reshape((-1,2)), cv2.NORM_L2) / len(imgpoints2)
         mean_error += error
-
 
       return True, ret, mean_error / len(self.objectPoints), mat, pts
     return False
