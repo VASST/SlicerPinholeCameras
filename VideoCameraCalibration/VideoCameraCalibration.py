@@ -297,11 +297,13 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       ret = self.logic.findCircleGrid(im)
 
     if ret:
-      self.labelResult.text = "Success (" + str(self.logic.countIntrinsics()) + ")"
-      done, error, mtx, dist = self.logic.calibrateVideoCamera()
+      string = "Success (" + str(self.logic.countIntrinsics()) + ")"
+      done, result, error, mtx, dist = self.logic.calibrateVideoCamera()
       if done:
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
+        string += ". Calibration reprojection error: " + str(error)
+      self.labelResult.text = string
     else:
       self.labelResult.text = "Failure."
 
@@ -651,7 +653,15 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
     if ret:
       self.objectPoints.append(self.objPattern)
       self.imagePoints.append(centers)
-      self.calibrateVideoCamera()
+      string = "Success (" + str(self.logic.countIntrinsics()) + ")"
+      done, result, error, mtx, dist = self.logic.calibrateVideoCamera()
+      if done:
+        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
+        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
+        string += ". Calibration reprojection error: " + str(error)
+      self.labelResult.text = string
+    else:
+      self.labelResult.text = "Failure."
 
     return ret
 
@@ -665,7 +675,15 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       pts = vtk.vtkDoubleArray()
       for i in range(0, len(dist[0])):
         pts.InsertNextValue(dist[0,i])
-      return True, ret, mat, pts
+
+      mean_error = 0
+      for i in xrange(len(self.objectPoints)):
+        imgpoints2, _ = cv2.projectPoints(self.objectPoints[i], rvecs[i], tvecs[i], mtx, dist)
+        error = cv2.norm(self.imagePoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+        mean_error += error
+
+
+      return True, ret, mean_error / len(self.objectPoints), mat, pts
     return False
 
   def countIntrinsics(self):
