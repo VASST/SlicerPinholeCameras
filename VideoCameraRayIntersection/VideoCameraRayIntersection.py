@@ -325,9 +325,10 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       # Get videoCamera parameters
       mtx = VideoCameraRayIntersectionWidget.vtk3x3ToNumpy(self.videoCameraSelector.currentNode().GetIntrinsicMatrix())
 
-      dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-      for i in range(0, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-        dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      if self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues() != 0:
+        dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+        for i in range(0, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+          dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 
@@ -349,8 +350,8 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       directionVec_ref = sensorToReference * directionVec_sensor
 
       if self.developerMode:
-        logging.debug("origin: " + str(origin_ref).replace('\n',''))
-        logging.debug("dir: " + str(directionVec_ref).replace('\n',''))
+        logging.debug("origin_ref: " + str(origin_ref).replace('\n',''))
+        logging.debug("dir_ref: " + str(directionVec_ref).replace('\n',''))
 
       result = self.logic.addRay([origin_ref[0,0], origin_ref[1,0], origin_ref[2,0]], [directionVec_ref[0,0], directionVec_ref[1,0], directionVec_ref[2,0]])
       if result is not None:

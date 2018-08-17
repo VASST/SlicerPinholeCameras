@@ -497,9 +497,10 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # Convert vtk to numpy
       mtx = VideoCameraCalibrationWidget.vtk3x3ToNumpy(self.videoCameraSelector.currentNode().GetIntrinsicMatrix())
 
-      dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-      for i in range(0, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-        dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      if self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues() != 0:
+        dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
+        for i in range(0, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
+          dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 
