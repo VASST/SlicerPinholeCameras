@@ -504,28 +504,23 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       else:
         dist = np.asarray([], dtype=np.float64)
 
-      x = [self.stylusTipToVideoCamera.GetElement(0, 3), self.stylusTipToVideoCamera.GetElement(1, 3), self.stylusTipToVideoCamera.GetElement(2, 3)]
+      tip_cam = [self.stylusTipToVideoCamera.GetElement(0, 3), self.stylusTipToVideoCamera.GetElement(1, 3), self.stylusTipToVideoCamera.GetElement(2, 3)]
 
       # Origin - always 0, 0, 0
-      origin = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
+      origin_sen = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
 
       # Calculate the direction vector for the given pixel (after undistortion)
-      undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
-      pixel = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
+      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx), np.array([1.0], dtype=np.float64)))
 
       # Find the inverse of the videoCamera intrinsic param matrix
-      # Calculate direction vector by multiplying the inverse of the
-      # intrinsic param matrix by the pixel
-      directionVec = np.linalg.inv(mtx) * pixel
-
-      # Normalize the direction vector
-      directionVecNormalized = directionVec / np.linalg.norm(directionVec)
+      # Calculate direction vector by multiplying the inverse of the intrinsic param matrix by the pixel
+      directionVec_sen = np.linalg.inv(mtx) * pixel / np.linalg.norm(np.linalg.inv(mtx) * pixel)
 
       # And add it to the list!
-      self.logic.addPointLinePair(x, origin, directionVecNormalized)
+      self.logic.addPointLinePair(tip_cam, origin_sen, directionVec_sen)
 
       if self.developerMode:
-        self.rayList.append([x, origin, directionVecNormalized])
+        self.rayList.append([tip_cam, origin_sen, directionVec_sen])
 
       countString = str(self.logic.countMarkerToSensor()) + "/" + str(self.captureCountSpinBox.value) + " points captured."
 

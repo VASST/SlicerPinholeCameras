@@ -333,16 +333,13 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
         dist = np.asarray([], dtype=np.float64)
 
       # Calculate the direction vector for the given pixel (after undistortion)
-      undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
-      pixel = np.asarray([[undistPoint[0,0,0]], [undistPoint[0,0,1]], [1.0]], dtype=np.float64)
+      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx), np.array([1.0], dtype=np.float64)))
 
       # Get the direction based on selected pixel
       origin_sensor = np.asmatrix([[0.0],[0.0],[0.0],[1.0]], dtype=np.float64)
-      directionVec_sensor = (np.linalg.inv(mtx) * pixel) / np.linalg.norm(np.linalg.inv(mtx) * pixel)
-      directionVec_sensor = np.asmatrix([[directionVec_sensor[0,0]],[directionVec_sensor[1,0]],[directionVec_sensor[2,0]],[0.0]], dtype=np.float64)
+      directionVec_sensor = np.vstack(((np.linalg.inv(mtx) * pixel) / np.linalg.norm(np.linalg.inv(mtx) * pixel), np.array([0.0], dtype=np.float64)))
 
-      sensorToVideoCamera = VideoCameraRayIntersectionWidget.vtk4x4ToNumpy(self.videoCameraSelector.currentNode().GetMarkerToImageSensorTransform())
-      sensorToVideoCamera = np.linalg.inv(sensorToVideoCamera)
+      sensorToVideoCamera = np.linalg.inv(VideoCameraRayIntersectionWidget.vtk4x4ToNumpy(self.videoCameraSelector.currentNode().GetMarkerToImageSensorTransform()))
 
       sensorToReference = self.videoCameraToReference * sensorToVideoCamera
 
@@ -353,7 +350,7 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
         logging.debug("origin_ref: " + str(origin_ref).replace('\n',''))
         logging.debug("dir_ref: " + str(directionVec_ref).replace('\n',''))
 
-      result = self.logic.addRay([origin_ref[0,0], origin_ref[1,0], origin_ref[2,0]], [directionVec_ref[0,0], directionVec_ref[1,0], directionVec_ref[2,0]])
+      result = self.logic.addRay(origin_ref[0:-1], directionVec_ref[0:-1])
       if result is not None:
         self.resultsLabel.text = "Point: " + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + ". Error: " + str(self.logic.getError())
         if self.developerMode:
