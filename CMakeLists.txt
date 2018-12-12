@@ -10,16 +10,13 @@ set(EXTENSION_CONTRIBUTORS "Adam Rankin (Robarts Research Institute), Elvis Chen
 set(EXTENSION_DESCRIPTION "This extension contains modules for interacting with still and video cameras (calibration, capture, etc...)")
 set(EXTENSION_ICONURL "https://github.com/VASST/SlicerVideoCameras/raw/master/SlicerVideoCameras_128.png")
 set(EXTENSION_SCREENSHOTURLS "https://github.com/VASST/SlicerVideoCameras/raw/master/Documentation/screenshot.png")
-set(EXTENSION_DEPENDS "SlicerIGT;SlicerOpenCV;VASSTAlgorithms")
+set(EXTENSION_DEPENDS "SlicerOpenCV;VASSTAlgorithms")
 SET(EXTENSION_TAGS "NA")
 
 #-----------------------------------------------------------------------------
 # Extension dependencies
 find_package(Slicer REQUIRED)
 include(${Slicer_USE_FILE})
-
-find_package(SlicerIGT REQUIRED)
-mark_as_superbuild(SlicerOpenCV_DIR)
 
 find_package(SlicerOpenCV REQUIRED)
 mark_as_superbuild(SlicerOpenCV_DIR)
