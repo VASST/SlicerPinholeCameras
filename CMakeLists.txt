@@ -5,7 +5,7 @@ project(VideoCameras)
 #-----------------------------------------------------------------------------
 # Extension meta-information
 set(EXTENSION_HOMEPAGE "https://github.com/VASST/SlicerVideoCameras")
-set(EXTENSION_CATEGORY "VideoCameras")
+set(EXTENSION_CATEGORY "Cameras")
 set(EXTENSION_CONTRIBUTORS "Adam Rankin (Robarts Research Institute), Elvis Chen (Robarts Research Institute)")
 set(EXTENSION_DESCRIPTION "This extension contains modules for interacting with still and video cameras (calibration, capture, etc...)")
 set(EXTENSION_ICONURL "https://github.com/VASST/SlicerVideoCameras/raw/master/SlicerVideoCameras_128.png")
