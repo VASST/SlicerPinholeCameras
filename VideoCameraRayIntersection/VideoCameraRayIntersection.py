@@ -152,7 +152,13 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       self.widget = slicer.util.loadUI(path)
       self.layout.addWidget(self.widget)
 
-    self.videoCameraIntrinWidget = VideoCameraRayIntersectionWidget.get(self.widget, "videoCameraIntrinsicsWidget")
+    # Camera UI
+    layout = VideoCameraRayIntersectionWidget.get(self.widget, "gridLayout")
+    placeholder = VideoCameraRayIntersectionWidget.get(self.widget, "placeholder")
+    layout.removeWidget(placeholder)
+    self.videoCameraIntrinWidget = slicer.qMRMLVideoCameraIntrinsicsWidget()
+    self.videoCameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
+    layout.addWidget(self.videoCameraIntrinWidget, 0, 0)
 
     # Workaround for videoCamera selector
     self.videoCameraSelector = self.videoCameraIntrinWidget.children()[1].children()[1]
@@ -333,7 +339,7 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
         dist = np.asarray([], dtype=np.float64)
 
       # Calculate the direction vector for the given pixel (after undistortion)
-      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx), np.array([1.0], dtype=np.float64)))
+      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx)[0].transpose(), np.array([1.0], dtype=np.float64)))
 
       # Get the direction based on selected pixel
       origin_sensor = np.asmatrix([[0.0],[0.0],[0.0],[1.0]], dtype=np.float64)

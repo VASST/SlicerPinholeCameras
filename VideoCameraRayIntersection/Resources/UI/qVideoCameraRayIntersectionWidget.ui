@@ -15,7 +15,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="qMRMLVideoCameraIntrinsicsWidget" name="videoCameraIntrinsicsWidget"/>
+    <widget class="QWidget" name="placeholder"/>
    </item>
    <item row="6" column="0">
     <spacer name="verticalSpacer">
@@ -204,12 +204,6 @@
    <class>qSlicerWidget</class>
    <extends>QWidget</extends>
    <header>qSlicerWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>qMRMLVideoCameraIntrinsicsWidget</class>
-   <extends>qSlicerWidget</extends>
-   <header>qMRMLVideoCameraIntrinsicsWidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -162,8 +162,13 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.widget = slicer.util.loadUI(path)
       self.layout.addWidget(self.widget)
 
-      # Nodes
-      self.videoCameraIntrinWidget = VideoCameraCalibrationWidget.get(self.widget, "videoCameraIntrinsicsWidget")
+      # Camera UI
+      layout = VideoCameraCalibrationWidget.get(self.widget, "gridLayout")
+      placeholder = VideoCameraCalibrationWidget.get(self.widget, "placeholder")
+      layout.removeWidget(placeholder)
+      self.videoCameraIntrinWidget = slicer.qMRMLVideoCameraIntrinsicsWidget()
+      self.videoCameraIntrinWidget.setMRMLScene(slicer.mrmlScene)
+      layout.addWidget(self.videoCameraIntrinWidget, 0, 0)
 
       # Workaround for VideoCamera selector
       self.videoCameraSelector = self.videoCameraIntrinWidget.children()[1].children()[1]
@@ -510,7 +515,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       origin_sen = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
 
       # Calculate the direction vector for the given pixel (after undistortion)
-      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx), np.array([1.0], dtype=np.float64)))
+      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx)[0].tranpose(), np.array([1.0], dtype=np.float64)))
 
       # Find the inverse of the videoCamera intrinsic param matrix
       # Calculate direction vector by multiplying the inverse of the intrinsic param matrix by the pixel
