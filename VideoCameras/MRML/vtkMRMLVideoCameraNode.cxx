@@ -37,11 +37,11 @@ vtkMRMLVideoCameraNode::vtkMRMLVideoCameraNode()
   , DistortionCoefficients(nullptr)
   , MarkerToImageSensorTransform(nullptr)
 {
-  this->SetAndObserveIntrinsicMatrix(vtkMatrix3x3::New());
-  this->SetAndObserveDistortionCoefficients(vtkDoubleArray::New());
+  this->SetAndObserveIntrinsicMatrix(vtkSmartPointer<vtkMatrix3x3>::New());
+  this->SetAndObserveDistortionCoefficients(vtkSmartPointer<vtkDoubleArray>::New());
   this->GetDistortionCoefficients()->SetNumberOfValues(5);
   this->GetDistortionCoefficients()->FillValue(0.0);
-  this->SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4::New());
+  this->SetAndObserveMarkerToImageSensorTransform(vtkSmartPointer<vtkMatrix4x4>::New());
 }
 
 //-----------------------------------------------------------------------------

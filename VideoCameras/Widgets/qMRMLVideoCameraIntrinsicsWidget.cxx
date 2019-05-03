@@ -309,6 +309,7 @@ qMRMLVideoCameraIntrinsicsWidget::qMRMLVideoCameraIntrinsicsWidget(QWidget* vpar
 //------------------------------------------------------------------------------
 qMRMLVideoCameraIntrinsicsWidget::~qMRMLVideoCameraIntrinsicsWidget()
 {
+  this->SetCurrentNode(nullptr);
 }
 
 //----------------------------------------------------------------------------
@@ -318,7 +319,7 @@ void qMRMLVideoCameraIntrinsicsWidget::onVideoCameraSelectorChanged(vtkMRMLNode*
 
   vtkMRMLVideoCameraNode* camNode = vtkMRMLVideoCameraNode::SafeDownCast(newNode);
 
-  SetCurrentNode(camNode);
+  this->SetCurrentNode(camNode);
 
   if (this->CurrentNode != nullptr)
   {

@@ -361,7 +361,7 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
         self.resultsLabel.text = "Point: " + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + ". Error: " + str(self.logic.getError())
         if self.developerMode:
           # For ease of copy pasting multiple entries, print it to the python console
-          print "Intersection|" + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + "|" + str(self.logic.getError())
+          print("Intersection|" + str(result[0]) + "," + str(result[1]) + "," + str(result[2]) + "|" + str(self.logic.getError()))
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
