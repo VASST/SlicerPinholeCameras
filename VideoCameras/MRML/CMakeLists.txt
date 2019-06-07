@@ -20,9 +20,11 @@ set(${KIT}_SRCS
   )
 
 set(${KIT}_TARGET_LIBRARIES
-  opencv_videoio
-  ${MRML_LIBRARIES}
-  SlicerBaseLogic
+  PRIVATE
+    opencv_videoio
+  PUBLIC
+    ${MRML_LIBRARIES}
+    SlicerBaseLogic
   )
 
 #-----------------------------------------------------------------------------
