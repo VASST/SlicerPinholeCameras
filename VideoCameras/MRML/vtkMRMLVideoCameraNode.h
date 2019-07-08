@@ -33,6 +33,7 @@ public:
   {
     IntrinsicsModifiedEvent = 404001,
     DistortionCoefficientsModifiedEvent,
+    CameraPlaneOffsetModifiedEvent,
     MarkerToSensorTransformModifiedEvent
   };
 
@@ -59,6 +60,9 @@ public:
   vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   void SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs);
 
+  vtkGetObjectMacro(CameraPlaneOffset, vtkDoubleArray);
+  void SetAndObserveCameraPlaneOffset(vtkDoubleArray* planeOffset);
+
   vtkGetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
   void SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform);
 
@@ -68,13 +72,16 @@ protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   vtkSetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   vtkSetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
+  vtkSetObjectMacro(CameraPlaneOffset, vtkDoubleArray);
 
   unsigned long IntrinsicObserverObserverTag;
   unsigned long DistortionCoefficientsObserverTag;
+  unsigned long CameraPlaneOffsetObserverTag;
   unsigned long MarkerTransformObserverTag;
 
   void OnIntrinsicsModified(vtkObject* caller, unsigned long event, void* data);
   void OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
+  void OnCameraPlaneOffsetModified(vtkObject* caller, unsigned long event, void* data);
   void OnMarkerTransformModified(vtkObject* caller, unsigned long event, void* data);
 
 protected:
@@ -85,7 +92,7 @@ protected:
 
   vtkMatrix3x3*       IntrinsicMatrix;
   vtkDoubleArray*     DistortionCoefficients;
-
+  vtkDoubleArray*     CameraPlaneOffset;
   vtkMatrix4x4*       MarkerToImageSensorTransform;
 };
 

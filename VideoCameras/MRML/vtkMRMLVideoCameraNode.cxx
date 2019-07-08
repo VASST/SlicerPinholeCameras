@@ -36,12 +36,14 @@ vtkMRMLVideoCameraNode::vtkMRMLVideoCameraNode()
   , IntrinsicMatrix(nullptr)
   , DistortionCoefficients(nullptr)
   , MarkerToImageSensorTransform(nullptr)
+  , CameraPlaneOffset(nullptr)
 {
   this->SetAndObserveIntrinsicMatrix(vtkSmartPointer<vtkMatrix3x3>::New());
   this->SetAndObserveDistortionCoefficients(vtkSmartPointer<vtkDoubleArray>::New());
   this->GetDistortionCoefficients()->SetNumberOfValues(5);
   this->GetDistortionCoefficients()->FillValue(0.0);
   this->SetAndObserveMarkerToImageSensorTransform(vtkSmartPointer<vtkMatrix4x4>::New());
+  this->SetAndObserveCameraPlaneOffset(vtkSmartPointer<vtkDoubleArray>::New());
 }
 
 //-----------------------------------------------------------------------------
@@ -50,6 +52,7 @@ vtkMRMLVideoCameraNode::~vtkMRMLVideoCameraNode()
   this->SetAndObserveIntrinsicMatrix(nullptr);
   this->SetAndObserveDistortionCoefficients(nullptr);
   this->SetAndObserveMarkerToImageSensorTransform(nullptr);
+  this->SetAndObserveCameraPlaneOffset(nullptr);
 }
 
 //----------------------------------------------------------------------------
@@ -62,6 +65,7 @@ void vtkMRMLVideoCameraNode::Copy(vtkMRMLNode* anode)
   this->SetAndObserveIntrinsicMatrix(node->GetIntrinsicMatrix());
   this->SetAndObserveDistortionCoefficients(node->GetDistortionCoefficients());
   this->SetAndObserveMarkerToImageSensorTransform(node->GetMarkerToImageSensorTransform());
+  this->SetAndObserveCameraPlaneOffset(node->GetCameraPlaneOffset());
 
   this->EndModify(disabledModify);
 }
@@ -103,6 +107,24 @@ void vtkMRMLVideoCameraNode::SetAndObserveDistortionCoefficients(vtkDoubleArray*
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLVideoCameraNode::SetAndObserveCameraPlaneOffset(vtkDoubleArray* planeOffset)
+{
+  if (this->CameraPlaneOffset != NULL)
+  {
+    this->CameraPlaneOffset->RemoveObserver(this->CameraPlaneOffsetObserverTag);
+  }
+
+  this->SetCameraPlaneOffset(planeOffset);
+
+  if (this->CameraPlaneOffset != NULL)
+  {
+    this->CameraPlaneOffsetObserverTag = this->CameraPlaneOffset->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLVideoCameraNode::OnCameraPlaneOffsetModified);
+  }
+
+  this->InvokeEvent(vtkMRMLVideoCameraNode::CameraPlaneOffsetModifiedEvent);
+}
+
+//----------------------------------------------------------------------------
 void vtkMRMLVideoCameraNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform)
 {
   if (this->MarkerToImageSensorTransform != NULL)
@@ -141,6 +163,13 @@ void vtkMRMLVideoCameraNode::OnDistortionCoefficientsModified(vtkObject* caller,
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLVideoCameraNode::OnCameraPlaneOffsetModified(vtkObject* caller, unsigned long event, void* data)
+{
+  this->InvokeEvent(CameraPlaneOffsetModifiedEvent);
+  this->Modified();
+}
+
+//----------------------------------------------------------------------------
 void vtkMRMLVideoCameraNode::OnMarkerTransformModified(vtkObject* caller, unsigned long event, void* data)
 {
   this->InvokeEvent(MarkerToSensorTransformModifiedEvent);
@@ -158,4 +187,6 @@ void vtkMRMLVideoCameraNode::PrintSelf(ostream& os, vtkIndent indent)
   this->DistortionCoefficients->PrintSelf(os, indent);
   os << "MarkerToSensor Transform: " << std::endl;
   this->MarkerToImageSensorTransform->PrintSelf(os, indent);
+  os << "Camera Plane Offset: " << std::endl;
+  this->CameraPlaneOffset->PrintSelf(os, indent);
 }

@@ -83,6 +83,7 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   cv::Mat intrinMat;
   cv::Mat distCoeffs;
   cv::Mat markerToSensor;
+  cv::Mat cameraPlaneOffset;
   cv::FileNode intrinNode = fs["IntrinsicMatrix"];
   if (intrinNode.empty())
   {
@@ -107,9 +108,18 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   }
   markerToSensorNode >> markerToSensor;
 
+  cv::FileNode cameraPlaneNode = fs["CameraPlaneOffset"];
+  if (cameraPlaneNode.empty())
+  {
+    vtkErrorMacro("Camera file does not contain CameraPlaneOffset cv::Mat.");
+    return 0;
+  }
+  cameraPlaneNode >> cameraPlaneOffset;
+
   intrinMat.convertTo(intrinMat, CV_64F);
   distCoeffs.convertTo(distCoeffs, CV_64F);
   markerToSensor.convertTo(markerToSensor, CV_64F);
+  cameraPlaneOffset.convertTo(cameraPlaneOffset, CV_64F);
 
   vtkNew<vtkMatrix3x3> mat;
   for (int i = 0; i < 3; ++i)
@@ -119,11 +129,15 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
       mat->SetElement(i, j, intrinMat.at<double>(i, j));
     }
   }
+  cameraNode->SetAndObserveIntrinsicMatrix(mat);
+
   vtkNew<vtkDoubleArray> array;
   for (int i = 0; i < distCoeffs.rows; ++i)
   {
     array->InsertNextValue(distCoeffs.at<double>(i, 0));
   }
+  cameraNode->SetAndObserveDistortionCoefficients(array);
+
   vtkNew<vtkMatrix4x4> markerToImageSensor;
   for (int i = 0; i < 4; ++i)
   {
@@ -132,10 +146,14 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
       markerToImageSensor->SetElement(i, j, markerToSensor.at<double>(i, j));
     }
   }
-
-  cameraNode->SetAndObserveIntrinsicMatrix(mat);
-  cameraNode->SetAndObserveDistortionCoefficients(array);
   cameraNode->SetAndObserveMarkerToImageSensorTransform(markerToImageSensor);
+
+  array->Reset();
+  for (int i = 0; i < cameraPlaneOffset.rows; ++i)
+  {
+    array->InsertNextValue(cameraPlaneOffset.at<double>(i, 0));
+  }
+  cameraNode->SetAndObserveCameraPlaneOffset(array);
 
   return 1;
 }
@@ -206,6 +224,20 @@ int vtkMRMLVideoCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
       }
     }
     fs << "MarkerToSensor" << mat;
+  }
+
+  if (videoCameraNode->GetCameraPlaneOffset() == NULL)
+  {
+    vtkInfoMacro("Camera plane offsets have not been determined for this camera.");
+  }
+  else
+  {
+    cv::Mat planeOffsets(videoCameraNode->GetCameraPlaneOffset()->GetSize(), 1, CV_64F);
+    for (int i = 0; i < videoCameraNode->GetCameraPlaneOffset()->GetSize(); ++i)
+    {
+      planeOffsets.at<double>(i, 0) = videoCameraNode->GetCameraPlaneOffset()->GetValue(i);
+    }
+    fs << "CameraPlaneOffset" << planeOffsets;
   }
 
   return 1;

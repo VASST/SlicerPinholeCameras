@@ -51,6 +51,7 @@ protected slots:
   void onIntrinsicItemChanged(QTableWidgetItem* item);
   void onDistortionItemChanged(QTableWidgetItem* item);
   void onMarkerTransformItemChanged(QTableWidgetItem* item);
+  void onCameraPlaneOffsetItemChanged(QTableWidgetItem* item);
 
 protected:
   virtual void setup();
@@ -58,6 +59,7 @@ protected:
   void OnNodeIntrinsicsModified(vtkObject* caller, unsigned long event, void* data);
   void OnNodeDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
   void OnNodeMarkerTransformModified(vtkObject* caller, unsigned long event, void* data);
+  void OnCameraPlaneOffsetModified(vtkObject* caller, unsigned long event, void* data);
 
   void SetCurrentNode(vtkMRMLVideoCameraNode* newNode);
 
@@ -68,6 +70,7 @@ protected:
   unsigned long IntrinsicObserverTag;
   unsigned long DistortionObserverTag;
   unsigned long MarkerTransformObserverTag;
+  unsigned long CameraPlaneOffsetObserverTag;
 
 private:
   Q_DECLARE_PRIVATE(qMRMLVideoCameraIntrinsicsWidget);
