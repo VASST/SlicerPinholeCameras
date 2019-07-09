@@ -342,7 +342,12 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx)[0].transpose(), np.array([1.0], dtype=np.float64)))
 
       # Get the direction based on selected pixel
-      origin_sensor = np.asmatrix([[0.0],[0.0],[0.0],[1.0]], dtype=np.float64)
+
+      ## Origin - defined in camera, typically 0,0,0
+      origin_sensor = np.asarray(np.zeros((1, 3),dtype=np.float64))
+      for i in range(0, 3):
+        origin_sensor[0, i] = self.videoCameraSelector.currentNode().GetCameraPlaneOffset().GetValue(i)
+
       directionVec_sensor = np.vstack(((np.linalg.inv(mtx) * pixel) / np.linalg.norm(np.linalg.inv(mtx) * pixel), np.array([0.0], dtype=np.float64)))
 
       sensorToVideoCamera = np.linalg.inv(VideoCameraRayIntersectionWidget.vtk4x4ToNumpy(self.videoCameraSelector.currentNode().GetMarkerToImageSensorTransform()))

@@ -499,7 +499,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       point[0,0,1] = abs(arr[1])
 
       # Get VideoCamera parameters
-      # Convert vtk to numpy
       mtx = VideoCameraCalibrationWidget.vtk3x3ToNumpy(self.videoCameraSelector.currentNode().GetIntrinsicMatrix())
 
       if self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues() != 0:
@@ -511,8 +510,10 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       tip_cam = [self.stylusTipToVideoCamera.GetElement(0, 3), self.stylusTipToVideoCamera.GetElement(1, 3), self.stylusTipToVideoCamera.GetElement(2, 3)]
 
-      # Origin - always 0, 0, 0
-      origin_sen = np.asarray([[0.0],[0.0],[0.0]], dtype=np.float64)
+      # Origin - defined in camera, typically 0,0,0
+      origin_sen = np.asarray(np.zeros((1, 3), dtype=np.float64))
+      for i in range(0, 3):
+        origin_sen[0, i] = self.videoCameraSelector.currentNode().GetCameraPlaneOffset().GetValue(i)
 
       # Calculate the direction vector for the given pixel (after undistortion)
       pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx)[0].tranpose(), np.array([1.0], dtype=np.float64)))
