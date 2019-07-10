@@ -44,6 +44,8 @@ vtkMRMLVideoCameraNode::vtkMRMLVideoCameraNode()
   this->GetDistortionCoefficients()->FillValue(0.0);
   this->SetAndObserveMarkerToImageSensorTransform(vtkSmartPointer<vtkMatrix4x4>::New());
   this->SetAndObserveCameraPlaneOffset(vtkSmartPointer<vtkDoubleArray>::New());
+  this->GetCameraPlaneOffset()->SetNumberOfValues(3);
+  this->GetCameraPlaneOffset()->FillValue(0.0);
 }
 
 //-----------------------------------------------------------------------------
@@ -62,10 +64,10 @@ void vtkMRMLVideoCameraNode::Copy(vtkMRMLNode* anode)
   Superclass::Copy(anode);
   vtkMRMLVideoCameraNode* node = vtkMRMLVideoCameraNode::SafeDownCast(anode);
 
-  this->SetAndObserveIntrinsicMatrix(node->GetIntrinsicMatrix());
-  this->SetAndObserveDistortionCoefficients(node->GetDistortionCoefficients());
-  this->SetAndObserveMarkerToImageSensorTransform(node->GetMarkerToImageSensorTransform());
-  this->SetAndObserveCameraPlaneOffset(node->GetCameraPlaneOffset());
+  this->GetIntrinsicMatrix()->DeepCopy(node->GetIntrinsicMatrix());
+  this->GetDistortionCoefficients()->DeepCopy(node->GetDistortionCoefficients());
+  this->GetMarkerToImageSensorTransform()->DeepCopy(node->GetMarkerToImageSensorTransform());
+  this->GetCameraPlaneOffset()->DeepCopy(node->GetCameraPlaneOffset());
 
   this->EndModify(disabledModify);
 }
