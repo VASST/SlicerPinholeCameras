@@ -131,12 +131,14 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   }
   cameraNode->SetAndObserveIntrinsicMatrix(mat);
 
-  vtkNew<vtkDoubleArray> array;
-  for (int i = 0; i < distCoeffs.rows; ++i)
   {
-    array->InsertNextValue(distCoeffs.at<double>(i, 0));
+    vtkNew<vtkDoubleArray> array;
+    for (int i = 0; i < distCoeffs.rows; ++i)
+    {
+      array->InsertNextValue(distCoeffs.at<double>(i, 0));
+    }
+    cameraNode->SetAndObserveDistortionCoefficients(array);
   }
-  cameraNode->SetAndObserveDistortionCoefficients(array);
 
   vtkNew<vtkMatrix4x4> markerToImageSensor;
   for (int i = 0; i < 4; ++i)
@@ -148,12 +150,14 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   }
   cameraNode->SetAndObserveMarkerToImageSensorTransform(markerToImageSensor);
 
-  array->Reset();
-  for (int i = 0; i < cameraPlaneOffset.rows; ++i)
   {
-    array->InsertNextValue(cameraPlaneOffset.at<double>(i, 0));
+    vtkNew<vtkDoubleArray> array;
+    for (int i = 0; i < cameraPlaneOffset.rows; ++i)
+    {
+      array->InsertNextValue(cameraPlaneOffset.at<double>(i, 0));
+    }
+    cameraNode->SetAndObserveCameraPlaneOffset(array);
   }
-  cameraNode->SetAndObserveCameraPlaneOffset(array);
 
   return 1;
 }
