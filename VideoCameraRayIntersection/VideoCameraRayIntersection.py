@@ -100,6 +100,7 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       return
 
     self.logic = VideoCameraRayIntersectionLogic()
+    self.markupsLogic = slicer.modules.markups.logic()
 
     self.canSelectFiducials = False
     self.isManualCapturing = False
@@ -111,10 +112,14 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.videoCameraIntrinWidget = None
     self.videoCameraSelector = None
     self.videoCameraNode = None
+    self.markupsNode = None
+
+    # Observer tags
     self.videoCameraObserverTag = None
+    self.videoCameraTransformObserverTag = None
+    self.pointModifiedObserverTag = None
 
     self.videoCameraTransformNode = None
-    self.videoCameraTransformObserverTag = None
     self.videoCameraTransformStatusLabel = None
 
     self.okPixmap = VideoCameraRayIntersectionWidget.loadPixmap('icon_Ok', 20, 20)
@@ -131,9 +136,6 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
     # Results
     self.resultsLabel = None
-
-    self.tempMarkupNode = None
-    self.sceneObserverTag = None
     self.videoCameraToReference = None
 
     self.identity3x3 = vtk.vtkMatrix3x3()
@@ -190,9 +192,6 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.captureButton.connect('clicked(bool)', self.onCapture)
     self.resetButton.connect('clicked(bool)', self.onReset)
 
-    # Adding an observer to scene to listen for mrml node
-    self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
-
     # Choose red slice only
     lm = slicer.app.layoutManager()
     lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
@@ -217,8 +216,6 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.videoCameraTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onVideoCameraTransformSelected)
     self.captureButton.disconnect('clicked(bool)', self.onCapture)
     self.resetButton.disconnect('clicked(bool)', self.onReset)
-
-    slicer.mrmlScene.RemoveObserver(self.sceneObserverTag)
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onVideoCameraModified(self, caller, event):
@@ -309,21 +306,29 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.copyNode.GetID())
 
     # Initiate fiducial selection
-    slicer.modules.markups.logic().StartPlaceMode(False)
+    self.markupsNode = slicer.vtkMRMLMarkupsFiducialNode()
+    slicer.mrmlScene.AddNode(self.markupsNode)
+    self.markupsNode.SetName('SphereCenter')
+    self.markupsLogic.SetActiveListId(self.markupsNode)
+    self.markupsLogic.StartPlaceMode(False)
+    self.pointModifiedObserverTag = self.markupsNode.AddObserver(slicer.vtkMRMLMarkupsNode.PointModifiedEvent, self.onPointModified)
 
     # Disable resetting while capture is active
     self.resetButton.setEnabled(False)
     self.isManualCapturing = True
     self.captureButton.setText('Cancel')
 
-  @vtk.calldata_type(vtk.VTK_OBJECT)
-  def onNodeAdded(self, caller, event, callData):
-    if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing:
+  @vtk.calldata_type(vtk.VTK_INT)
+  def onPointModified(self, caller, event, callData):
+    if callData is None:
+      return()
+
+    if self.markupsNode.GetNthControlPointPositionStatus(callData) == slicer.vtkMRMLMarkupsNode.PositionDefined:
       self.endManualCapturing()
 
       # Calculate point and line pair
       arr = [0,0,0]
-      callData.GetMarkupPoint(callData.GetNumberOfMarkups()-1, 0, arr)
+      self.markupsNode.GetNthControlPointPosition(callData, arr)
       point = np.zeros((1,1,2),dtype=np.float64)
       point[0,0,0] = abs(arr[0])
       point[0,0,1] = abs(arr[1])
@@ -370,7 +375,6 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
-      self.tempMarkupNode = callData
       qt.QTimer.singleShot(10, self.removeMarkup)
 
   def endManualCapturing(self):
@@ -386,10 +390,12 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     self.resetButton.setEnabled(True)
 
   def removeMarkup(self):
-    if self.tempMarkupNode is not None:
-      self.tempMarkupNode.RemoveAllMarkups()
-      slicer.mrmlScene.RemoveNode(self.tempMarkupNode)
-      self.tempMarkupNode = None
+    if self.markupsNode is not None:
+      self.markupsNode.RemoveObserver(self.pointModifiedObserverTag)
+      self.pointModifiedObserverTag = None
+      self.markupsNode.RemoveAllMarkups()
+      slicer.mrmlScene.RemoveNode(self.markupsNode)
+      self.markupsNode = None
 
   def onVideoCameraTransformSelected(self):
     if self.videoCameraTransformObserverTag is not None:

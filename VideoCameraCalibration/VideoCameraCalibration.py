@@ -84,11 +84,13 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       return
 
     self.logic = VideoCameraCalibrationLogic()
+    self.markupsLogic = slicer.modules.markups.logic()
 
     self.canSelectFiducials = True
     self.isManualCapturing = False
     self.rayList = []
 
+    self.markupsNode = None
     self.centerFiducialSelectionNode = None
     self.copyNode = None
     self.imageGridNode = None
@@ -102,12 +104,15 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.intrinsicsContainer = None
     self.autoSettingsContainer = None
 
+    # Observer tags
+    self.stylusTipTransformObserverTag = None
+    self.pointModifiedObserverTag = None
+
     # Inputs
     self.imageSelector = None
     self.stylusTipTransformSelector = None
 
     self.stylusTipTransformNode = None
-    self.stylusTipTransformObserverTag = None
 
     self.okPixmap = VideoCameraCalibrationWidget.loadPixmap('icon_Ok', 20, 20)
     self.notOkPixmap = VideoCameraCalibrationWidget.loadPixmap('icon_NotOk', 20, 20)
@@ -143,8 +148,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.rowsSpinBox = None
 
     self.objPattern = None
-    self.sceneObserverTag = None
-    self.tempMarkupNode = None
     self.videoCameraOriginInReference = None
     self.stylusTipToVideoCamera = vtk.vtkMatrix4x4()
     self.IdentityMatrix = vtk.vtkMatrix4x4()
@@ -247,9 +250,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.asymmetricButton.connect('clicked(bool)', self.onFlagChanged)
       self.clusteringButton.connect('clicked(bool)', self.onFlagChanged)
 
-      # Adding an observer to scene to listen for mrml node
-      self.sceneObserverTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.NodeAddedEvent, self.onNodeAdded)
-
       # Choose red slice only
       lm = slicer.app.layoutManager()
       lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
@@ -286,8 +286,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.symmetricButton.disconnect('clicked(bool)', self.onFlagChanged)
     self.asymmetricButton.disconnect('clicked(bool)', self.onFlagChanged)
     self.clusteringButton.disconnect('clicked(bool)', self.onFlagChanged)
-
-    slicer.mrmlScene.RemoveObserver(self.sceneObserverTag)
 
   def onIntrinsicCapture(self):
     vtk_im = self.imageSelector.currentNode().GetImageData()
@@ -477,7 +475,12 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.copyNode.GetID())
 
     # Initiate fiducial selection
-    slicer.modules.markups.logic().StartPlaceMode(False)
+    self.markupsNode = slicer.vtkMRMLMarkupsFiducialNode()
+    slicer.mrmlScene.AddNode(self.markupsNode)
+    self.markupsNode.SetName('SphereCenter')
+    self.markupsLogic.SetActiveListId(self.markupsNode)
+    self.markupsLogic.StartPlaceMode(False)
+    self.pointModifiedObserverTag = self.markupsNode.AddObserver(slicer.vtkMRMLMarkupsNode.PointModifiedEvent, self.onPointModified)
 
     # Disable input changing while capture is active
     self.inputsContainer.setEnabled(False)
@@ -486,17 +489,20 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.isManualCapturing = True
     self.manualButton.setText('Cancel')
 
-  @vtk.calldata_type(vtk.VTK_OBJECT)
-  def onNodeAdded(self, caller, event, callData):
-    if type(callData) is slicer.vtkMRMLMarkupsFiducialNode and self.isManualCapturing:
+  @vtk.calldata_type(vtk.VTK_INT)
+  def onPointModified(self, caller, event, callData):
+    if callData is None:
+      return()
+
+    if self.markupsNode.GetNthControlPointPositionStatus(callData) == slicer.vtkMRMLMarkupsNode.PositionDefined:
       self.endManualCapturing()
 
       # Calculate point and line pair
-      arr = [0,0,0]
-      callData.GetMarkupPoint(callData.GetNumberOfMarkups()-1, 0, arr)
-      point = np.zeros((1,1,2),dtype=np.float64)
-      point[0,0,0] = abs(arr[0])
-      point[0,0,1] = abs(arr[1])
+      arr = [0, 0, 0]
+      self.markupsNode.GetNthControlPointPosition(callData, arr)
+      point = np.zeros((1, 1, 2), dtype=np.float64)
+      point[0, 0, 0] = abs(arr[0])
+      point[0, 0, 1] = abs(arr[1])
 
       # Get VideoCamera parameters
       mtx = VideoCameraCalibrationWidget.vtk3x3ToNumpy(self.videoCameraSelector.currentNode().GetIntrinsicMatrix())
@@ -516,7 +522,8 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
         origin_sen[0, i] = self.videoCameraSelector.currentNode().GetCameraPlaneOffset().GetValue(i)
 
       # Calculate the direction vector for the given pixel (after undistortion)
-      pixel = np.vstack((cv2.undistortPoints(point, mtx, dist, P=mtx)[0].tranpose(), np.array([1.0], dtype=np.float64)))
+      undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
+      pixel = np.vstack((undistPoint[0].tranpose(), np.array([1.0], dtype=np.float64)))
 
       # Find the inverse of the videoCamera intrinsic param matrix
       # Calculate direction vector by multiplying the inverse of the intrinsic param matrix by the pixel
@@ -560,7 +567,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       # Allow markups module some time to process the new markup, but then quickly delete it
       # Avoids VTK errors in log
-      self.tempMarkupNode = callData
       qt.QTimer.singleShot(10, self.removeMarkup)
 
   def calcRegAndBuildString(self):
@@ -577,10 +583,12 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     return result, markerToSensor, string
 
   def removeMarkup(self):
-    if self.tempMarkupNode is not None:
-      self.tempMarkupNode.RemoveAllMarkups()
-      slicer.mrmlScene.RemoveNode(self.tempMarkupNode)
-      self.tempMarkupNode = None
+    if self.markupsNode is not None:
+      self.markupsNode.RemoveObserver(self.pointModifiedObserverTag)
+      self.pointModifiedObserverTag = None
+      self.markupsNode.RemoveAllMarkups()
+      slicer.mrmlScene.RemoveNode(self.markupsNode)
+      self.markupsNode = None
 
   def onSemiAutoButton(self):
     pass
