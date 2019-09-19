@@ -250,6 +250,7 @@ class VideoCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     if self.imageSelector.currentNode() is not None:
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().SetBackgroundVolumeID(self.imageSelector.currentNode().GetID())
       slicer.app.layoutManager().sliceWidget('Red').sliceLogic().FitSliceToAll()
+      slicer.app.layoutManager().sliceWidget('Red').sliceController().rotateSliceToBackground()  # If the image is not RAS aligned, we want to show it to the user anyways
 
       # Check pixel spacing, x and y must be 1px = 1mm in order for markups to produce correct pixel locations
       spacing = self.imageSelector.currentNode().GetImageData().GetSpacing()
