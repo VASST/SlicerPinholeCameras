@@ -203,7 +203,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.intrinsicCircleGridButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCircleGrid")
       self.columnsSpinBox = VideoCameraCalibrationWidget.get(self.widget, "spinBox_Columns")
       self.rowsSpinBox = VideoCameraCalibrationWidget.get(self.widget, "spinBox_Rows")
-      self.squareSizeEdit = VideoCameraCalibrationWidget.get(self.widget, "lineEdit_SquareSize")
+      self.squareSizeEdit = VideoCameraCalibrationWidget.get(self.widget, "doubleSpinBox_SquareSize")
       self.adaptiveThresholdButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
       self.normalizeImageButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
       self.filterQuadsButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
@@ -255,7 +255,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       lm.setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutOneUpRedSliceView)
 
       # Initialize pattern, etc..
-      self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, int(self.squareSizeEdit.text))
+      self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, self.squareSizeEdit.value)
 
       # Refresh Apply button state
       self.onSelect()
@@ -374,7 +374,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.logic.setFlags(flags)
 
   def onPatternChanged(self, value):
-    self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, int(self.squareSizeEdit.text))
+    self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, self.squareSizeEdit.value)
 
   def onIntrinsicModeChanged(self):
     if self.intrinsicCheckerboardButton.checked:
