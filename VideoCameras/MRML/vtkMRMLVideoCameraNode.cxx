@@ -37,6 +37,8 @@ vtkMRMLVideoCameraNode::vtkMRMLVideoCameraNode()
   , DistortionCoefficients(nullptr)
   , MarkerToImageSensorTransform(nullptr)
   , CameraPlaneOffset(nullptr)
+  , ReprojectionError(-1.0)
+  , RegistrationError(-1.0)
 {
   this->SetAndObserveIntrinsicMatrix(vtkSmartPointer<vtkMatrix3x3>::New());
   this->SetAndObserveDistortionCoefficients(vtkSmartPointer<vtkDoubleArray>::New());
@@ -68,6 +70,8 @@ void vtkMRMLVideoCameraNode::Copy(vtkMRMLNode* anode)
   this->GetDistortionCoefficients()->DeepCopy(node->GetDistortionCoefficients());
   this->GetMarkerToImageSensorTransform()->DeepCopy(node->GetMarkerToImageSensorTransform());
   this->GetCameraPlaneOffset()->DeepCopy(node->GetCameraPlaneOffset());
+  this->SetReprojectionError(node->GetReprojectionError());
+  this->SetRegistrationError(node->GetRegistrationError());
 
   this->EndModify(disabledModify);
 }
@@ -148,6 +152,18 @@ void vtkMRMLVideoCameraNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix
 vtkMRMLStorageNode* vtkMRMLVideoCameraNode::CreateDefaultStorageNode()
 {
   return vtkMRMLVideoCameraStorageNode::New();
+}
+
+//----------------------------------------------------------------------------
+bool vtkMRMLVideoCameraNode::IsReprojectionErrorValid() const
+{
+  return this->ReprojectionError != -1.0;
+}
+
+//----------------------------------------------------------------------------
+bool vtkMRMLVideoCameraNode::IsRegistrationErrorValid() const
+{
+  return this->RegistrationError != -1.0;
 }
 
 //----------------------------------------------------------------------------

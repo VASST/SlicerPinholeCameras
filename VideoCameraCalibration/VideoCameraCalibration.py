@@ -305,6 +305,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       if done:
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
+        self.videoCameraIntrinWidget.GetCurrentNode().SetReprojectionError(error)
         string += ". Calibration reprojection error: " + str(error)
         logging.info("Calibration reprojection error: " + str(error))
       self.labelResult.text = string

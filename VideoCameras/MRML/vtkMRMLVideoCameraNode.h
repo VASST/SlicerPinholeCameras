@@ -68,6 +68,14 @@ public:
 
   virtual vtkMRMLStorageNode* CreateDefaultStorageNode() VTK_OVERRIDE;
 
+  bool IsReprojectionErrorValid() const;
+  vtkSetMacro(ReprojectionError, double);
+  vtkGetMacro(ReprojectionError, double);
+
+  bool IsRegistrationErrorValid() const;
+  vtkSetMacro(RegistrationError, double);
+  vtkGetMacro(RegistrationError, double);
+
 protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   vtkSetObjectMacro(DistortionCoefficients, vtkDoubleArray);
@@ -92,6 +100,8 @@ protected:
 
   vtkMatrix3x3*       IntrinsicMatrix;
   vtkDoubleArray*     DistortionCoefficients;
+  double              ReprojectionError;
+  double              RegistrationError;
   vtkDoubleArray*     CameraPlaneOffset;
   vtkMatrix4x4*       MarkerToImageSensorTransform;
 };

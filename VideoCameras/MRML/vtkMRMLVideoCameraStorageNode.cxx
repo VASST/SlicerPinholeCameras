@@ -128,6 +128,16 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
     cameraPlaneNode >> cameraPlaneOffset;
   }
 
+  if (!fs["ReprojectionError"].empty())
+  {
+    cameraNode->SetReprojectionError((double)fs["ReprojectionError"]);
+  }
+
+  if (!fs["RegistrationError"].empty())
+  {
+    cameraNode->SetRegistrationError((double)fs["RegistrationError"]);
+  }
+
   intrinMat.convertTo(intrinMat, CV_64F);
   distCoeffs.convertTo(distCoeffs, CV_64F);
   markerToSensor.convertTo(markerToSensor, CV_64F);
@@ -258,6 +268,16 @@ int vtkMRMLVideoCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
       planeOffsets.at<double>(i, 0) = videoCameraNode->GetCameraPlaneOffset()->GetValue(i);
     }
     fs << "CameraPlaneOffset" << planeOffsets;
+  }
+
+  if (videoCameraNode->IsReprojectionErrorValid())
+  {
+    fs << "ReprojectionError" << videoCameraNode->GetReprojectionError();
+  }
+
+  if (videoCameraNode->IsRegistrationErrorValid())
+  {
+    fs << "RegistrationError" << videoCameraNode->GetRegistrationError();
   }
 
   return 1;
