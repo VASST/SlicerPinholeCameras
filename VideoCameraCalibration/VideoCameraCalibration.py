@@ -89,6 +89,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.canSelectFiducials = True
     self.isManualCapturing = False
     self.rayList = []
+    self.invertImage = False
 
     self.markupsNode = None
     self.centerFiducialSelectionNode = None
@@ -143,6 +144,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.squareSizeEdit = None
     self.clusteringButton = None
     self.labelResult = None
+    self.invertImageButton = None
 
     self.columnsSpinBox = None
     self.rowsSpinBox = None
@@ -212,6 +214,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.asymmetricButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
       self.clusteringButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
       self.labelResult = VideoCameraCalibrationWidget.get(self.widget, "label_ResultValue")
+      self.invertImageButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_InvertImage")
 
       # Disable capture as image processing isn't active yet
       self.trackerContainer.setEnabled(False)
@@ -249,6 +252,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.symmetricButton.connect('clicked(bool)', self.onFlagChanged)
       self.asymmetricButton.connect('clicked(bool)', self.onFlagChanged)
       self.clusteringButton.connect('clicked(bool)', self.onFlagChanged)
+      self.invertImageButton.connect('stateChanged(int)', self.onInvertImageChanged)
 
       # Choose red slice only
       lm = slicer.app.layoutManager()
@@ -286,6 +290,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.symmetricButton.disconnect('clicked(bool)', self.onFlagChanged)
     self.asymmetricButton.disconnect('clicked(bool)', self.onFlagChanged)
     self.clusteringButton.disconnect('clicked(bool)', self.onFlagChanged)
+    self.invertImageButton.disconnect('stateChanged(int)', self.onInvertImageChanged)
 
   def onIntrinsicCapture(self):
     vtk_im = self.imageSelector.currentNode().GetImageData()
@@ -295,9 +300,9 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     im = im.reshape(cols, rows, -1)
 
     if self.intrinsicCheckerboardButton.checked:
-      ret = self.logic.findCheckerboard(im)
+      ret = self.logic.findCheckerboard(im, self.invertImage)
     else:
-      ret = self.logic.findCircleGrid(im)
+      ret = self.logic.findCircleGrid(im, self.invertImage)
 
     if ret:
       string = "Success (" + str(self.logic.countIntrinsics()) + ")"
@@ -373,6 +378,9 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
         flags = flags + cv2.CALIB_CB_CLUSTERING
 
     self.logic.setFlags(flags)
+
+  def onInvertImageChanged(self, value):
+    self.invertImage = self.invertImageButton.isChecked()
 
   def onPatternChanged(self, value):
     self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, self.squareSizeEdit.value)
@@ -639,12 +647,15 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
   def setFlags(self, flags):
     self.flags = flags
 
-  def findCheckerboard(self, image):
+  def findCheckerboard(self, image, invert):
     try:
       gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except:
       gray = image
     self.imageSize = gray.shape[::-1]
+
+    if invert:
+      gray = cv2.bitwise_not(gray)
 
     # Find the chess board corners
     ret, corners = cv2.findChessboardCorners(gray, (self.objPatternColumns, self.objPatternRows), self.flags)
@@ -657,7 +668,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
     return ret
 
-  def findCircleGrid(self, image):
+  def findCircleGrid(self, image, invert):
     try:
       gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except:
