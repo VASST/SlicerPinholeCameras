@@ -212,9 +212,9 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.fastCheckButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_FastCheck")
       self.symmetricButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
       self.asymmetricButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
-      self.clusteringButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_Clustering")
+      self.clusteringButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_Clustering")
       self.labelResult = VideoCameraCalibrationWidget.get(self.widget, "label_ResultValue")
-      self.invertImageButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_InvertImage")
+      self.invertImageButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_ImageInvert")
 
       # Disable capture as image processing isn't active yet
       self.trackerContainer.setEnabled(False)
@@ -260,6 +260,9 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
 
       # Initialize pattern, etc..
       self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, self.squareSizeEdit.value)
+
+      # Initialize intrinsic flags
+      self.onFlagChanged()
 
       # Refresh Apply button state
       self.onSelect()
@@ -320,7 +323,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onReset(self):
     self.logic.resetIntrinsic()
     self.labelResult.text = "Reset."
-    self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3.Identity())
+    self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3())
     self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
 
   def onResetPtL(self):
@@ -394,6 +397,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.symmetricButton.enabled = False
       self.asymmetricButton.enabled = False
       self.clusteringButton.enabled = False
+      self.squareSizeEdit.enabled = True
     else:
       self.adaptiveThresholdButton.enabled = False
       self.normalizeImageButton.enabled = False
@@ -402,6 +406,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.symmetricButton.enabled = True
       self.asymmetricButton.enabled = True
       self.clusteringButton.enabled = True
+      self.squareSizeEdit.enabled = False
 
   def onStylusTipTransformSelected(self):
     if self.stylusTipTransformObserverTag is not None:
@@ -652,7 +657,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except:
       gray = image
-    self.imageSize = gray.shape[::-1]
+    self.imageSize = gray.shape
 
     if invert:
       gray = cv2.bitwise_not(gray)
@@ -673,22 +678,16 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except:
       gray = image
-    self.imageSize = gray.shape[::-1]
+    self.imageSize = gray.shape
+
+    if invert:
+      gray = cv2.bitwise_not(gray)
 
     ret, centers = cv2.findCirclesGrid(gray, (self.objPatternRows, self.objPatternColumns), self.flags)
 
     if ret:
       self.objectPoints.append(self.objPattern)
       self.imagePoints.append(centers)
-      string = "Success (" + str(self.logic.countIntrinsics()) + ")"
-      done, result, error, mtx, dist = self.logic.calibrateVideoCamera()
-      if done:
-        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
-        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
-        string += ". Calibration reprojection error: " + str(error)
-      self.labelResult.text = string
-    else:
-      self.labelResult.text = "Failure."
 
     return ret
 

@@ -507,6 +507,9 @@
            <property name="text">
             <string>CALIB_CB_ADAPTIVE_THRESH</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -519,6 +522,9 @@
            </property>
            <property name="text">
             <string>CALIB_CB_NORMALIZE_IMAGE </string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -563,7 +569,7 @@
             <bool>true</bool>
            </property>
            <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_CircleGridMethod</string>
+            <string notr="true">buttonGroup_CircleMethod</string>
            </attribute>
           </widget>
          </item>
@@ -579,12 +585,12 @@
             <string>CALIB_CB_ASYMMETRIC_GRID </string>
            </property>
            <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_CircleGridMethod</string>
+            <string notr="true">buttonGroup_CircleMethod</string>
            </attribute>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="radioButton_Clustering">
+          <widget class="QCheckBox" name="checkBox_Clustering">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -597,9 +603,6 @@
            <property name="text">
             <string>CALIB_CB_CLUSTERING </string>
            </property>
-           <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_CircleGridMethod</string>
-           </attribute>
           </widget>
          </item>
         </layout>
@@ -869,6 +872,6 @@
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_CircleGridMethod"/>
+  <buttongroup name="buttonGroup_CircleMethod"/>
  </buttongroups>
 </ui>
