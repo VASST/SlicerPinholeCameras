@@ -20,6 +20,13 @@
       <string>Inputs</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_stylusTransform">
+        <property name="text">
+         <string>StylusTipToCamera:</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBox_ImageSelector">
         <property name="nodeTypes">
@@ -44,7 +51,14 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_VolumeInput">
+        <property name="text">
+         <string>Image:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
        <widget class="qMRMLNodeComboBox" name="comboBox_StylusTipSelector">
         <property name="nodeTypes">
          <stringlist>
@@ -65,24 +79,24 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
+      <item row="2" column="2">
        <widget class="QLabel" name="label_StylusTipToCamera_Status">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_VolumeInput">
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_ImageInvert">
         <property name="text">
-         <string>Image:</string>
+         <string>Invert Image:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_stylusTransform">
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="checkBox_ImageInvert">
         <property name="text">
-         <string>StylusTipToCamera:</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -468,22 +482,9 @@
       <string>Intrinsics Calibration</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_IntrinsicMethod">
-        <property name="text">
-         <string>Method:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1" colspan="5">
-       <widget class="QWidget" name="widget_FlagsContainer" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout">
+      <item row="1" column="0" colspan="6">
+       <widget class="QWidget" name="widget_ContainerCheckerboard" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -497,137 +498,85 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QCheckBox" name="checkBox_AdaptiveThreshold">
-           <property name="toolTip">
-            <string>Use adaptive thresholding to convert the image to black and white, rather than a fixed threshold level (computed from the average image brightness).</string>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
+          <widget class="QLabel" name="label_Rows">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
            <property name="text">
-            <string>CALIB_CB_ADAPTIVE_THRESH</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Rows:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox_NormalizeImage">
-           <property name="toolTip">
-            <string>Normalize the image gamma with equalizeHist() before applying fixed or adaptive thresholding.</string>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
-           </property>
-           <property name="text">
-            <string>CALIB_CB_NORMALIZE_IMAGE </string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+          <widget class="QSpinBox" name="spinBox_Rows">
+           <property name="value">
+            <number>6</number>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox_FilterQuads">
-           <property name="toolTip">
-            <string>Use additional criteria (like contour area, perimeter, square-like shape) to filter out false quads extracted at the contour retrieval stage.</string>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
+          <widget class="QLabel" name="label_Columns">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
            <property name="text">
-            <string>CALIB_CB_FILTER_QUADS </string>
+            <string>Columns:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox_FastCheck">
-           <property name="toolTip">
-            <string>Run a fast check on the image that looks for chessboard corners, and shortcut the call if none is found. This can drastically speed up the call in the degenerate condition when no chessboard is observed.</string>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
-           </property>
-           <property name="text">
-            <string>CALIB_CB_FAST_CHECK </string>
+          <widget class="QSpinBox" name="spinBox_Columns">
+           <property name="value">
+            <number>9</number>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="radioButton_SymmetricGrid">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
+          <widget class="QLabel" name="label_SquareSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
            <property name="text">
-            <string>CALIB_CB_SYMMETRIC_GRID </string>
+            <string>Square Size:</string>
            </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_CircleMethod</string>
-           </attribute>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="radioButton_AsymmetricGrid">
-           <property name="enabled">
-            <bool>false</bool>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_SquareSize">
+           <property name="suffix">
+            <string>mm</string>
            </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
            </property>
-           <property name="text">
-            <string>CALIB_CB_ASYMMETRIC_GRID </string>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">buttonGroup_CircleMethod</string>
-           </attribute>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkBox_Clustering">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="toolTip">
-            <string>uses a special algorithm for grid detection. It is more robust to perspective distortions but much more sensitive to background clutter.</string>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
-           </property>
-           <property name="text">
-            <string>CALIB_CB_CLUSTERING </string>
+           <property name="value">
+            <double>25.000000000000000</double>
            </property>
           </widget>
          </item>
         </layout>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_Flags">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_Result">
         <property name="text">
-         <string>Flags:</string>
+         <string>Result:</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="1" colspan="3">
-       <widget class="QLabel" name="label_ResultValue">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_IntrinsicMethod">
         <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <string>Method:</string>
         </property>
        </widget>
       </item>
@@ -669,83 +618,265 @@
            </attribute>
           </widget>
          </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_IntrinsicAruco">
+           <property name="text">
+            <string>Aruco Board</string>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_IntrinsicMethod</string>
+           </attribute>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_IntrinsicCharuco">
+           <property name="text">
+            <string>Charuco</string>
+           </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_IntrinsicMethod</string>
+           </attribute>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
-      <item row="2" column="5">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_SquareSize">
-        <property name="suffix">
-         <string>mm</string>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="value">
-         <double>25.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_Result">
+      <item row="8" column="1" colspan="3">
+       <widget class="QLabel" name="label_ResultValue">
         <property name="text">
-         <string>Result:</string>
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_Rows">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Rows:</string>
-        </property>
+      <item row="2" column="0" colspan="6">
+       <widget class="QWidget" name="widget_ContainerFlags" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_Flags">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Flags:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="widget_FlagsContainer" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QWidget" name="widget_CheckerboardFlags" native="true">
+              <layout class="QVBoxLayout" name="verticalLayout_2">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="checkBox_AdaptiveThreshold">
+                 <property name="toolTip">
+                  <string>Use adaptive thresholding to convert the image to black and white, rather than a fixed threshold level (computed from the average image brightness).</string>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_ADAPTIVE_THRESH</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox_NormalizeImage">
+                 <property name="toolTip">
+                  <string>Normalize the image gamma with equalizeHist() before applying fixed or adaptive thresholding.</string>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_NORMALIZE_IMAGE </string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox_FilterQuads">
+                 <property name="toolTip">
+                  <string>Use additional criteria (like contour area, perimeter, square-like shape) to filter out false quads extracted at the contour retrieval stage.</string>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_FILTER_QUADS </string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox_FastCheck">
+                 <property name="toolTip">
+                  <string>Run a fast check on the image that looks for chessboard corners, and shortcut the call if none is found. This can drastically speed up the call in the degenerate condition when no chessboard is observed.</string>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_FAST_CHECK </string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_CircleGridFlags" native="true">
+              <layout class="QVBoxLayout" name="verticalLayout_3">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QRadioButton" name="radioButton_SymmetricGrid">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_SYMMETRIC_GRID </string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">buttonGroup_CircleGridMethod</string>
+                 </attribute>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="radioButton_AsymmetricGrid">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_ASYMMETRIC_GRID </string>
+                 </property>
+                 <attribute name="buttonGroup">
+                  <string notr="true">buttonGroup_CircleGridMethod</string>
+                 </attribute>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBox_Clustering">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>uses a special algorithm for grid detection. It is more robust to perspective distortions but much more sensitive to background clutter.</string>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::RightToLeft</enum>
+                 </property>
+                 <property name="text">
+                  <string>CALIB_CB_CLUSTERING </string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="spinBox_Rows">
-        <property name="value">
-         <number>6</number>
-        </property>
+      <item row="3" column="0" colspan="6">
+       <widget class="QWidget" name="widget_arucoDictContainer" native="true">
+        <layout class="QFormLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_arucoDict">
+           <property name="text">
+            <string>Dictionary:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboBox_arucoDict"/>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item row="2" column="3">
-       <widget class="QSpinBox" name="spinBox_Columns">
-        <property name="value">
-         <number>9</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_Columns">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Columns:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="4">
-       <widget class="QLabel" name="label_SquareSize">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Square Size:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0" colspan="6">
+      <item row="7" column="0" colspan="6">
        <widget class="QWidget" name="widget_CapContainer" native="true">
         <property name="minimumSize">
          <size>
@@ -809,18 +940,168 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_ImageInvert">
-        <property name="text">
-         <string>Invert Image:</string>
+      <item row="4" column="0" colspan="6">
+       <widget class="QWidget" name="widget_arucoArgs" native="true">
+        <property name="enabled">
+         <bool>false</bool>
         </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_markerSeparation">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Marker Separation (cm):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_markerSeparation">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.200000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_arucoMarkerSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Marker Size (cm):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_markerSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>1.600000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QCheckBox" name="checkBox_ImageInvert">
-        <property name="text">
-         <string/>
+      <item row="5" column="0" colspan="6">
+       <widget class="QWidget" name="widget_charucoArgs" native="true">
+        <property name="enabled">
+         <bool>false</bool>
         </property>
+        <layout class="QGridLayout" name="gridLayout_6">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_charucoSquareSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>1.500000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_charucoSquareSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Square Size (cm):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_charucoMarkerSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Marker Size (cm):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_charucoMarkerSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>1.500000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -866,12 +1147,12 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_ProcessMode"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_CircleMethod"/>
+  <buttongroup name="buttonGroup_CircleGridMethod"/>
+  <buttongroup name="buttonGroup_ProcessMode"/>
  </buttongroups>
 </ui>
