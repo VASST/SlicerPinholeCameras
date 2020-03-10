@@ -430,7 +430,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     rows, cols, _ = vtk_im.GetDimensions()
     sc = vtk_im.GetPointData().GetScalars()
     im = vtk.util.numpy_support.vtk_to_numpy(sc)
-    im = im.reshape(cols, rows, -1)
+    im = im.reshape(cols, rows)
     im = np.flip(im, (0,1))
 
     if self.intrinsicCheckerboardButton.checked:
@@ -894,16 +894,21 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
       return True, ret, mat, pts
     if len(self.arucoCorners) > 0:
+      cameraMatrixInit = np.array([[1000., 0., self.imageSize[0] / 2.],
+                                   [0., 1000., self.imageSize[1] / 2.],
+                                   [0., 0., 1.]])
+
+      distCoeffsInit = np.zeros((5, 1))
       counter = np.array(self.arucoCount)
-      ret, mtx, dist, rvecs, tvecs = aruco.calibrateCameraAruco(self.arucoCorners, self.arucoIDs, counter,
-                                                                self.arucoBoard, self.imageSize, None, None)
+      ret, mtx, dist, rvecs, tvecs = aruco.calibrateCameraAruco(self.arucoCorners, self.arucoIDs, counter, self.arucoBoard, self.imageSize, cameraMatrixInit, distCoeffsInit)
+
       mat = vtk.vtkMatrix3x3()
       for i in range(0, 3):
         for j in range(0, 3):
           mat.SetElement(i,j, mtx[i,j])
       pts = vtk.vtkDoubleArray()
       for i in range(0, len(dist[0])):
-        pts.InsertNextValue(dist[0,i])
+        pts.InsertNextValue(dist[i,0])
 
       return True, ret, mat, pts
     if len(self.charucoCorners) > 0:
