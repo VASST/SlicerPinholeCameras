@@ -907,8 +907,8 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
         for j in range(0, 3):
           mat.SetElement(i,j, mtx[i,j])
       pts = vtk.vtkDoubleArray()
-      for i in range(0, len(dist[0])):
-        pts.InsertNextValue(dist[i,0])
+      for i in range(0, len(dist)):
+        pts.InsertNextValue(dist[i])
 
       return True, ret, mat, pts
     if len(self.charucoCorners) > 0:
