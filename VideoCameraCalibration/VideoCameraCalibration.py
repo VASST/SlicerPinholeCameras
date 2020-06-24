@@ -407,7 +407,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onStylusTipTransformModified(self, caller, event):
     mat = vtk.vtkMatrix4x4()
-    self.stylusTipTransformNode.GetMatrixTransformToParent(mat)
+    self.stylusTipTransformNode.GetMatrixTransformToWorld(mat)
     if VideoCameraCalibrationWidget.areSameVTK4x4(mat, self.IdentityMatrix):
       self.stylusTipTransformStatusLabel.setPixmap(self.notOkPixmap)
       self.manualButton.enabled = False
@@ -463,7 +463,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       return()
 
     # Record tracker data at time of freeze and store
-    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToParent(self.stylusTipToVideoCamera)
+    self.stylusTipTransformSelector.currentNode().GetMatrixTransformToWorld(self.stylusTipToVideoCamera)
 
     # Make a copy of the volume node (aka freeze cv capture) to allow user to play with detection parameters or click on center
     self.centerFiducialSelectionNode = slicer.mrmlScene.GetNodeByID(slicer.app.layoutManager().sliceWidget('Red').sliceLogic().GetSliceCompositeNode().GetBackgroundVolumeID())
@@ -478,7 +478,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.markupsNode = slicer.vtkMRMLMarkupsFiducialNode()
     slicer.mrmlScene.AddNode(self.markupsNode)
     self.markupsNode.SetName('SphereCenter')
-    self.markupsLogic.SetActiveListId(self.markupsNode)
+    self.markupsLogic.SetActiveListID(self.markupsNode)
     self.markupsLogic.StartPlaceMode(False)
     self.pointModifiedObserverTag = self.markupsNode.AddObserver(slicer.vtkMRMLMarkupsNode.PointModifiedEvent, self.onPointModified)
 
@@ -517,19 +517,22 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       tip_cam = [self.stylusTipToVideoCamera.GetElement(0, 3), self.stylusTipToVideoCamera.GetElement(1, 3), self.stylusTipToVideoCamera.GetElement(2, 3)]
 
       # Origin - defined in camera, typically 0,0,0
-      origin_sen = np.asarray(np.zeros((1, 3), dtype=np.float64))
+      origin_sen = np.asarray(np.zeros((3, 1), dtype=np.float64))
       for i in range(0, 3):
-        origin_sen[0, i] = self.videoCameraSelector.currentNode().GetCameraPlaneOffset().GetValue(i)
+        origin_sen[i, 0] = self.videoCameraSelector.currentNode().GetCameraPlaneOffset().GetValue(i)
 
       # Calculate the direction vector for the given pixel (after undistortion)
       undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
-      pixel = np.vstack((undistPoint[0].tranpose(), np.array([1.0], dtype=np.float64)))
+      pixel = np.vstack((undistPoint[0].transpose(), np.array([1.0], dtype=np.float64)))
 
       # Find the inverse of the videoCamera intrinsic param matrix
       # Calculate direction vector by multiplying the inverse of the intrinsic param matrix by the pixel
       directionVec_sen = np.linalg.inv(mtx) * pixel / np.linalg.norm(np.linalg.inv(mtx) * pixel)
 
-      # And add it to the list!
+      # And add it to the list!)
+      print(tip_cam)
+      print(origin_sen)
+      print(directionVec_sen)
       self.logic.addPointLinePair(tip_cam, origin_sen, directionVec_sen)
 
       if self.developerMode:
