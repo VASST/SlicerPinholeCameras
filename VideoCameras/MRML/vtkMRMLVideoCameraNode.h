@@ -40,17 +40,17 @@ public:
 public:
   static vtkMRMLVideoCameraNode* New();
   vtkTypeMacro(vtkMRMLVideoCameraNode, vtkMRMLStorableNode);
-  void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
+  void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  virtual vtkMRMLNode* CreateNodeInstance() VTK_OVERRIDE;
+  virtual vtkMRMLNode* CreateNodeInstance() override;
 
   ///
   /// Copy the node's attributes to this object
-  virtual void Copy(vtkMRMLNode* node) VTK_OVERRIDE;
+  virtual void Copy(vtkMRMLNode* node) override;
 
   ///
   /// Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() VTK_OVERRIDE {return "VideoCamera";};
+  virtual const char* GetNodeTagName() override {return "VideoCamera";};
 
   ///
   /// Set intrinsic matrix
@@ -66,7 +66,7 @@ public:
   vtkGetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
   void SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform);
 
-  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() VTK_OVERRIDE;
+  virtual vtkMRMLStorageNode* CreateDefaultStorageNode() override;
 
   bool IsReprojectionErrorValid() const;
   vtkSetMacro(ReprojectionError, double);

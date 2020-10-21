@@ -31,16 +31,16 @@ class VTK_SLICER_VIDEOCAMERAS_MODULE_MRML_EXPORT vtkMRMLVideoCameraStorageNode :
 public:
   static vtkMRMLVideoCameraStorageNode* New();
   vtkTypeMacro(vtkMRMLVideoCameraStorageNode, vtkMRMLStorageNode);
-  void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
+  void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  virtual vtkMRMLNode* CreateNodeInstance() VTK_OVERRIDE;
+  virtual vtkMRMLNode* CreateNodeInstance() override;
 
   ///
   /// Get node XML tag name (like Storage, Model)
-  virtual const char* GetNodeTagName() VTK_OVERRIDE  {return "VideoCameraStorage";}
+  virtual const char* GetNodeTagName() override {return "VideoCameraStorage";}
 
   /// Return true if the reference node can be read in
-  virtual bool CanReadInReferenceNode(vtkMRMLNode* refNode) VTK_OVERRIDE;
+  virtual bool CanReadInReferenceNode(vtkMRMLNode* refNode) override;
 
 protected:
   vtkMRMLVideoCameraStorageNode();
@@ -49,19 +49,19 @@ protected:
   void operator=(const vtkMRMLVideoCameraStorageNode&);
 
   /// Initialize all the supported read file types
-  virtual void InitializeSupportedReadFileTypes() VTK_OVERRIDE;
+  virtual void InitializeSupportedReadFileTypes() override;
 
   /// Initialize all the supported write file types
-  virtual void InitializeSupportedWriteFileTypes() VTK_OVERRIDE;
+  virtual void InitializeSupportedWriteFileTypes() override;
 
   /// Get data node that is associated with this storage node
   vtkMRMLVideoCameraNode* GetAssociatedDataNode();
 
   /// Read data and set it in the referenced node
-  virtual int ReadDataInternal(vtkMRMLNode* refNode) VTK_OVERRIDE;
+  virtual int ReadDataInternal(vtkMRMLNode* refNode) override;
 
   /// Write data from a  referenced node
-  virtual int WriteDataInternal(vtkMRMLNode* refNode) VTK_OVERRIDE;
+  virtual int WriteDataInternal(vtkMRMLNode* refNode) override;
 
 };
 
