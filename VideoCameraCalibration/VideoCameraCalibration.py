@@ -428,9 +428,10 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
   def onIntrinsicCapture(self):
     vtk_im = self.imageSelector.currentNode().GetImageData()
     rows, cols, _ = vtk_im.GetDimensions()
+    components = vtk_im.GetNumberOfScalarComponents()
     sc = vtk_im.GetPointData().GetScalars()
     im = vtk.util.numpy_support.vtk_to_numpy(sc)
-    im = im.reshape(cols, rows)
+    im = im.reshape(cols, rows, components)
     im = np.flip(im, (0,1))
 
     if self.intrinsicCheckerboardButton.checked:
@@ -754,12 +755,17 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
     if self.arucoDict is not None:
       if type.find('charuco') != -1:
         # square size, marker size
-        self.arucoBoard = aruco.CharucoBoard_create(self.objPatternColumns, self.objPatternRows, param1, param2,
-                                                    self.arucoDict)
+        try:
+          self.arucoBoard = aruco.CharucoBoard_create(self.objPatternColumns, self.objPatternRows, param1, param2, self.arucoDict)
+        except:
+          pass
+
       elif type.find('aruco') != -1:
         # marker size, marker separation
-        self.arucoBoard = aruco.GridBoard_create(self.objPatternColumns, self.objPatternRows, param1, param2,
-                                                 self.arucoDict)
+        try:
+          self.arucoBoard = aruco.GridBoard_create(self.objPatternColumns, self.objPatternRows, param1, param2, self.arucoDict)
+        except:
+          pass
 
   def setSubPixRadius(self, radius):
     self.subPixRadius = radius
@@ -778,7 +784,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def findCheckerboard(self, image, invert):
     try:
-      gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+      gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     except:
       gray = image
     self.imageSize = gray.shape[::-1]
@@ -799,7 +805,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
   def findCircleGrid(self, image, invert):
     try:
-      gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+      gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     except:
       gray = image
     self.imageSize = gray.shape[::-1]
@@ -829,7 +835,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       return False
 
     try:
-      gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+      gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     except:
       gray = image
     self.imageSize = gray.shape[::-1]
@@ -855,7 +861,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       return False
 
     try:
-      gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+      gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     except:
       gray = image
     self.imageSize = gray.shape[::-1]
