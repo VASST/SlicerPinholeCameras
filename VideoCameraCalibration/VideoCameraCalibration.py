@@ -453,7 +453,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
         self.videoCameraIntrinWidget.GetCurrentNode().SetReprojectionError(error)
         string += ". Calibration reprojection error: " + str(error)
-        logging.info("Calibration reprojection error: " + str(error))
       self.labelResult.text = string
     else:
       self.labelResult.text = "Failure."
@@ -639,9 +638,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       directionVec_sen = np.linalg.inv(mtx) * pixel / np.linalg.norm(np.linalg.inv(mtx) * pixel)
 
       # And add it to the list!)
-      print(tip_cam)
-      print(origin_sen)
-      print(directionVec_sen)
       self.logic.addPointLinePair(tip_cam, origin_sen, directionVec_sen)
 
       if self.developerMode:
@@ -942,7 +938,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
         for j in range(0, 3):
           mat.SetElement(i,j, camera_matrix[i,j])
       pts = vtk.vtkDoubleArray()
-      for i in range(0, len(distortion_coefficients0[0])):
+      for i in range(0, min(len(distortion_coefficients0),5)):
         pts.InsertNextValue(distortion_coefficients0[i,0])
 
       return True, ret, mat, pts
