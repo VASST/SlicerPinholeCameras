@@ -25,8 +25,9 @@ Version:   $Revision: 1.0 $
 // Qt includes
 #include <QWidget>
 
-class qMRMLVideoCameraIntrinsicsWidgetPrivate;
+class QAbstractButton;
 class QTableWidgetItem;
+class qMRMLVideoCameraIntrinsicsWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_VideoCamera
 class Q_SLICER_MODULE_VIDEOCAMERAS_WIDGETS_EXPORT qMRMLVideoCameraIntrinsicsWidget : public qSlicerAbstractModuleWidget
@@ -48,10 +49,10 @@ public slots:
 
 protected slots:
   void onVideoCameraSelectorChanged(vtkMRMLNode* newNode);
-  void onIntrinsicItemChanged(QTableWidgetItem* item);
-  void onDistortionItemChanged(QTableWidgetItem* item);
-  void onMarkerTransformItemChanged(QTableWidgetItem* item);
-  void onCameraPlaneOffsetItemChanged(QTableWidgetItem* item);
+  void onIntrinsicMatrixChanged();
+  void onDistortionMatrixChanged();
+  void onMarkerTransformMatrixChanged();
+  void onCameraPlaneOffsetMatrixChanged();
 
 protected:
   virtual void setup();

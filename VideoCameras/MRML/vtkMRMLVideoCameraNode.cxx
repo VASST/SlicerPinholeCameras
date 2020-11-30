@@ -41,11 +41,11 @@ vtkMRMLVideoCameraNode::vtkMRMLVideoCameraNode()
   , RegistrationError(-1.0)
 {
   this->SetAndObserveIntrinsicMatrix(vtkSmartPointer<vtkMatrix3x3>::New());
-  this->SetAndObserveDistortionCoefficients(vtkSmartPointer<vtkDoubleArray>::New());
+  this->SetDistortionCoefficients(vtkSmartPointer<vtkDoubleArray>::New());
   this->GetDistortionCoefficients()->SetNumberOfValues(5);
   this->GetDistortionCoefficients()->FillValue(0.0);
   this->SetAndObserveMarkerToImageSensorTransform(vtkSmartPointer<vtkMatrix4x4>::New());
-  this->SetAndObserveCameraPlaneOffset(vtkSmartPointer<vtkDoubleArray>::New());
+  this->SetCameraPlaneOffset(vtkSmartPointer<vtkDoubleArray>::New());
   this->GetCameraPlaneOffset()->SetNumberOfValues(3);
   this->GetCameraPlaneOffset()->FillValue(0.0);
 }
@@ -54,9 +54,9 @@ vtkMRMLVideoCameraNode::vtkMRMLVideoCameraNode()
 vtkMRMLVideoCameraNode::~vtkMRMLVideoCameraNode()
 {
   this->SetAndObserveIntrinsicMatrix(nullptr);
-  this->SetAndObserveDistortionCoefficients(nullptr);
+  this->SetDistortionCoefficients(nullptr);
   this->SetAndObserveMarkerToImageSensorTransform(nullptr);
-  this->SetAndObserveCameraPlaneOffset(nullptr);
+  this->SetCameraPlaneOffset(nullptr);
 }
 
 //----------------------------------------------------------------------------
@@ -95,42 +95,6 @@ void vtkMRMLVideoCameraNode::SetAndObserveIntrinsicMatrix(vtkMatrix3x3* intrinsi
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLVideoCameraNode::SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs)
-{
-  if (this->DistortionCoefficients != NULL)
-  {
-    this->DistortionCoefficients->RemoveObserver(this->DistortionCoefficientsObserverTag);
-  }
-
-  this->SetDistortionCoefficients(distCoeffs);
-
-  if (this->DistortionCoefficients != NULL)
-  {
-    this->DistortionCoefficientsObserverTag = this->DistortionCoefficients->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLVideoCameraNode::OnDistortionCoefficientsModified);
-  }
-
-  this->InvokeEvent(vtkMRMLVideoCameraNode::DistortionCoefficientsModifiedEvent);
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLVideoCameraNode::SetAndObserveCameraPlaneOffset(vtkDoubleArray* planeOffset)
-{
-  if (this->CameraPlaneOffset != NULL)
-  {
-    this->CameraPlaneOffset->RemoveObserver(this->CameraPlaneOffsetObserverTag);
-  }
-
-  this->SetCameraPlaneOffset(planeOffset);
-
-  if (this->CameraPlaneOffset != NULL)
-  {
-    this->CameraPlaneOffsetObserverTag = this->CameraPlaneOffset->AddObserver(vtkCommand::ModifiedEvent, this, &vtkMRMLVideoCameraNode::OnCameraPlaneOffsetModified);
-  }
-
-  this->InvokeEvent(vtkMRMLVideoCameraNode::CameraPlaneOffsetModifiedEvent);
-}
-
-//----------------------------------------------------------------------------
 void vtkMRMLVideoCameraNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform)
 {
   if (this->MarkerToImageSensorTransform != NULL)
@@ -146,6 +110,57 @@ void vtkMRMLVideoCameraNode::SetAndObserveMarkerToImageSensorTransform(vtkMatrix
   }
 
   this->InvokeEvent(vtkMRMLVideoCameraNode::MarkerToSensorTransformModifiedEvent);
+}
+
+//----------------------------------------------------------------------------
+bool vtkMRMLVideoCameraNode::HasDistortionCoefficents() const
+{
+  return this->DistortionCoefficientsExist;
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLVideoCameraNode::SetNumberOfDistortionCoefficients(vtkIdType num)
+{
+  this->DistortionCoefficients->SetNumberOfValues(num);
+}
+
+//----------------------------------------------------------------------------
+vtkIdType vtkMRMLVideoCameraNode::GetNumberOfDistortionCoefficients() const
+{
+  return this->DistortionCoefficients->GetNumberOfValues();
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLVideoCameraNode::SetDistortionCoefficientValue(vtkIdType idx, double value)
+{
+  if (this->DistortionCoefficients->GetNumberOfValues() > idx)
+  {
+    this->DistortionCoefficients->SetValue(idx, value);
+    this->DistortionCoefficientsExist = true;
+    this->InvokeEvent(vtkMRMLVideoCameraNode::DistortionCoefficientsModifiedEvent);
+  }
+}
+
+//----------------------------------------------------------------------------
+double vtkMRMLVideoCameraNode::GetDistortionCoefficientValue(vtkIdType idx)
+{
+  return this->DistortionCoefficients->GetValue(idx);
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLVideoCameraNode::SetCameraPlaneOffsetValue(vtkIdType idx, double value)
+{
+  if (this->CameraPlaneOffset->GetNumberOfValues() > idx)
+  {
+    this->CameraPlaneOffset->SetValue(idx, value);
+    this->InvokeEvent(vtkMRMLVideoCameraNode::CameraPlaneOffsetModifiedEvent);
+  }
+}
+
+//----------------------------------------------------------------------------
+double vtkMRMLVideoCameraNode::GetCameraPlaneOffsetValue(vtkIdType idx)
+{
+  return this->CameraPlaneOffset->GetValue(idx);
 }
 
 //----------------------------------------------------------------------------
@@ -170,20 +185,6 @@ bool vtkMRMLVideoCameraNode::IsRegistrationErrorValid() const
 void vtkMRMLVideoCameraNode::OnIntrinsicsModified(vtkObject* caller, unsigned long event, void* data)
 {
   this->InvokeEvent(IntrinsicsModifiedEvent);
-  this->Modified();
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLVideoCameraNode::OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data)
-{
-  this->InvokeEvent(DistortionCoefficientsModifiedEvent);
-  this->Modified();
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLVideoCameraNode::OnCameraPlaneOffsetModified(vtkObject* caller, unsigned long event, void* data)
-{
-  this->InvokeEvent(CameraPlaneOffsetModifiedEvent);
   this->Modified();
 }
 

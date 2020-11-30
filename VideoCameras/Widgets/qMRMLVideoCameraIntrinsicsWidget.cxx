@@ -16,6 +16,7 @@ Version:   $Revision: 1.0 $
 #include <QAction>
 #include <QClipboard>
 #include <QDebug>
+#include <QRadioButton>
 
 // Local includes
 #include "qMRMLVideoCameraIntrinsicsWidget.h"
@@ -386,96 +387,82 @@ void qMRMLVideoCameraIntrinsicsWidget::onVideoCameraSelectorChanged(vtkMRMLNode*
 }
 
 //----------------------------------------------------------------------------
-void qMRMLVideoCameraIntrinsicsWidget::onIntrinsicItemChanged(QTableWidgetItem* item)
+void qMRMLVideoCameraIntrinsicsWidget::onIntrinsicMatrixChanged()
 {
   Q_D(qMRMLVideoCameraIntrinsicsWidget);
 
-  bool ok;
-  double value = item->text().toDouble(&ok);
-  if (ok)
+  if (this->CurrentNode->GetIntrinsicMatrix() == nullptr)
   {
-    if (this->CurrentNode->GetIntrinsicMatrix() == nullptr)
-    {
-      vtkSmartPointer<vtkMatrix3x3> mat = vtkSmartPointer<vtkMatrix3x3>::New();
-      mat->Zero();
-      this->CurrentNode->SetAndObserveIntrinsicMatrix(mat);
-    }
-
-    this->CurrentNode->RemoveObserver(this->IntrinsicObserverTag);
-    this->CurrentNode->GetIntrinsicMatrix()->SetElement(item->row(), item->column(), value);
-    this->IntrinsicObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::IntrinsicsModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
+    vtkSmartPointer<vtkMatrix3x3> mat = vtkSmartPointer<vtkMatrix3x3>::New();
+    mat->Zero();
+    this->CurrentNode->SetAndObserveIntrinsicMatrix(mat);
   }
+
+  this->CurrentNode->RemoveObserver(this->IntrinsicObserverTag);
+  QVector<double> vals = d->MatrixWidget_CameraMatrix->values();
+  for (int i = 0; i < d->MatrixWidget_CameraMatrix->rowCount(); i++)
+  {
+    for (int j = 0; j < d->MatrixWidget_CameraMatrix->columnCount(); j++)
+    {
+      this->CurrentNode->GetIntrinsicMatrix()->SetElement(i, j, d->MatrixWidget_CameraMatrix->value(i, j));
+    }
+  }
+  this->IntrinsicObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::IntrinsicsModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
 }
 
 //----------------------------------------------------------------------------
-void qMRMLVideoCameraIntrinsicsWidget::onDistortionItemChanged(QTableWidgetItem* item)
+void qMRMLVideoCameraIntrinsicsWidget::onDistortionMatrixChanged()
 {
   Q_D(qMRMLVideoCameraIntrinsicsWidget);
 
-  bool ok;
-  double value = item->text().toDouble(&ok);
-
-  if (ok)
+  if (this->CurrentNode->GetNumberOfDistortionCoefficients() != d->MatrixWidget_DistCoeffs->columnCount())
   {
-    if (this->CurrentNode->GetDistortionCoefficients() == nullptr)
-    {
-      vtkSmartPointer<vtkDoubleArray> arr = vtkSmartPointer<vtkDoubleArray>::New();
-      arr->SetNumberOfValues(d->tableWidget_DistCoeffs->columnCount());
-      arr->Fill(0);
-      this->CurrentNode->SetAndObserveDistortionCoefficients(arr);
-    }
-
-    this->CurrentNode->RemoveObserver(this->DistortionObserverTag);
-    this->CurrentNode->GetDistortionCoefficients()->SetValue(item->column(), value);
-    this->DistortionObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::DistortionCoefficientsModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
+    this->CurrentNode->SetNumberOfDistortionCoefficients(d->MatrixWidget_DistCoeffs->columnCount());
   }
+
+  this->CurrentNode->RemoveObserver(this->DistortionObserverTag);
+  for (int i = 0; i < d->MatrixWidget_DistCoeffs->columnCount(); ++i)
+  {
+    this->CurrentNode->SetDistortionCoefficientValue(i, d->MatrixWidget_DistCoeffs->value(0, i));
+  }
+  this->DistortionObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::DistortionCoefficientsModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
 }
 
 //----------------------------------------------------------------------------
-void qMRMLVideoCameraIntrinsicsWidget::onMarkerTransformItemChanged(QTableWidgetItem* item)
+void qMRMLVideoCameraIntrinsicsWidget::onMarkerTransformMatrixChanged()
 {
   Q_D(qMRMLVideoCameraIntrinsicsWidget);
 
-  bool ok;
-  double value = item->text().toDouble(&ok);
-
-  if (ok)
+  if (this->CurrentNode->GetMarkerToImageSensorTransform() == nullptr)
   {
-    if (this->CurrentNode->GetMarkerToImageSensorTransform() == nullptr)
-    {
-      vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
-      mat->Identity();
-      this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(mat);
-    }
-
-    this->CurrentNode->RemoveObserver(this->MarkerTransformObserverTag);
-    this->CurrentNode->GetMarkerToImageSensorTransform()->SetElement(item->row(), item->column(), value);
-    this->MarkerTransformObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::MarkerToSensorTransformModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeMarkerTransformModified);
+    vtkSmartPointer<vtkMatrix4x4> mat = vtkSmartPointer<vtkMatrix4x4>::New();
+    mat->Identity();
+    this->CurrentNode->SetAndObserveMarkerToImageSensorTransform(mat);
   }
+
+  this->CurrentNode->RemoveObserver(this->MarkerTransformObserverTag);
+  QVector<double> vals = d->MatrixWidget_MarkerToImageSensor->values();
+  for (int i = 0; i < d->MatrixWidget_MarkerToImageSensor->rowCount(); i++)
+  {
+    for (int j = 0; j < d->MatrixWidget_MarkerToImageSensor->columnCount(); j++)
+    {
+      this->CurrentNode->GetMarkerToImageSensorTransform()->SetElement(i, j, d->MatrixWidget_MarkerToImageSensor->value(i, j));
+    }
+  }
+  this->MarkerTransformObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::MarkerToSensorTransformModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeMarkerTransformModified);
 }
 
 //----------------------------------------------------------------------------
-void qMRMLVideoCameraIntrinsicsWidget::onCameraPlaneOffsetItemChanged(QTableWidgetItem* item)
+void qMRMLVideoCameraIntrinsicsWidget::onCameraPlaneOffsetMatrixChanged()
 {
   Q_D(qMRMLVideoCameraIntrinsicsWidget);
 
-  bool ok;
-  double value = item->text().toDouble(&ok);
-
-  if (ok)
+  this->CurrentNode->RemoveObserver(this->CameraPlaneOffsetObserverTag);
+  for (int i = 0; i < 3; ++i)
   {
-    if (this->CurrentNode->GetCameraPlaneOffset() == nullptr)
-    {
-      vtkSmartPointer<vtkDoubleArray> arr = vtkSmartPointer<vtkDoubleArray>::New();
-      arr->SetNumberOfValues(d->tableWidget_CameraPlaneOffset->columnCount());
-      arr->Fill(0);
-      this->CurrentNode->SetAndObserveCameraPlaneOffset(arr);
-    }
-
-    this->CurrentNode->RemoveObserver(this->CameraPlaneOffsetObserverTag);
-    this->CurrentNode->GetCameraPlaneOffset()->SetValue(item->column(), value);
-    this->CameraPlaneOffsetObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::CameraPlaneOffsetModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnCameraPlaneOffsetModified);
+    this->CurrentNode->SetCameraPlaneOffsetValue(i, d->MatrixWidget_CameraPlaneOffset->value(0, i));
   }
+  this->CameraPlaneOffsetObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::CameraPlaneOffsetModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnCameraPlaneOffsetModified);
 }
 
 //----------------------------------------------------------------------------
@@ -490,10 +477,10 @@ void qMRMLVideoCameraIntrinsicsWidget::setup()
   connect(d->comboBox_CameraSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), this, SLOT(onVideoCameraSelectorChanged(vtkMRMLNode*)));
   connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)), d->comboBox_CameraSelector, SLOT(setMRMLScene(vtkMRMLScene*)));
 
-  connect(d->tableWidget_CameraMatrix, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onIntrinsicItemChanged(QTableWidgetItem*)));
-  connect(d->tableWidget_DistCoeffs, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onDistortionItemChanged(QTableWidgetItem*)));
-  connect(d->tableWidget_MarkerToImageSensor, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onMarkerTransformItemChanged(QTableWidgetItem*)));
-  connect(d->tableWidget_CameraPlaneOffset, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(onCameraPlaneOffsetItemChanged(QTableWidgetItem*)));
+  connect(d->MatrixWidget_CameraMatrix, SIGNAL(matrixChanged()), this, SLOT(onIntrinsicMatrixChanged()));
+  connect(d->MatrixWidget_DistCoeffs, SIGNAL(matrixChanged()), this, SLOT(onDistortionMatrixChanged()));
+  connect(d->MatrixWidget_MarkerToImageSensor, SIGNAL(matrixChanged()), this, SLOT(onMarkerTransformMatrixChanged()));
+  connect(d->MatrixWidget_CameraPlaneOffset, SIGNAL(matrixChanged()), this, SLOT(onCameraPlaneOffsetMatrixChanged()));
 
   d->CopyAction = new QAction(this);
   d->CopyAction->setIcon(QIcon(":Icons/Medium/SlicerEditCopy.png"));
@@ -536,15 +523,15 @@ void qMRMLVideoCameraIntrinsicsWidget::copyData()
   ss << ToString(markerToSensor, delimiter, rowDelimiter) << " ";
   ss << std::endl;
 
-  for (int i = 0; i < this->CurrentNode->GetCameraPlaneOffset()->GetNumberOfValues(); ++i)
+  for (int i = 0; i < 3; ++i)
   {
-    ss << this->CurrentNode->GetCameraPlaneOffset()->GetValue(i) << " ";
+    ss << this->CurrentNode->GetCameraPlaneOffsetValue(i) << " ";
   }
   ss << std::endl;
 
-  for (int i = 0; i < this->CurrentNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
+  for (int i = 0; i < this->CurrentNode->GetNumberOfDistortionCoefficients(); ++i)
   {
-    ss << this->CurrentNode->GetDistortionCoefficients()->GetValue(i) << " ";
+    ss << this->CurrentNode->GetDistortionCoefficientValue(i) << " ";
   }
   ss << std::endl;
 
@@ -587,7 +574,11 @@ void qMRMLVideoCameraIntrinsicsWidget::pasteData()
     qWarning() << "Cannot convert values to camera plane offset.";
     return;
   }
-  this->CurrentNode->SetAndObserveCameraPlaneOffset(tempArray);
+  for (int i = 0; i < 3; ++i)
+  {
+    this->CurrentNode->SetCameraPlaneOffsetValue(i, tempArray->GetValue(i));
+  }
+
 
   // Distortion Coefficients
   tempArray->Reset();
@@ -597,7 +588,11 @@ void qMRMLVideoCameraIntrinsicsWidget::pasteData()
     qWarning() << "Cannot convert remaining values to distortion coefficients.";
     return;
   }
-  this->CurrentNode->SetAndObserveDistortionCoefficients(tempArray);
+  this->CurrentNode->SetNumberOfDistortionCoefficients(tempArray->GetNumberOfValues());
+  for (vtkIdType i = 0; i < tempArray->GetNumberOfValues(); ++i)
+  {
+    this->CurrentNode->SetDistortionCoefficientValue(i, tempArray->GetValue(i));
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -609,15 +604,15 @@ void qMRMLVideoCameraIntrinsicsWidget::OnNodeIntrinsicsModified(vtkObject* calle
 
   if (camNode != nullptr && camNode->GetIntrinsicMatrix() != nullptr)
   {
-    bool oldState = d->tableWidget_CameraMatrix->blockSignals(true);
+    bool oldState = d->MatrixWidget_CameraMatrix->blockSignals(true);
     for (int i = 0; i < 3; ++i)
     {
       for (int j = 0; j < 3; ++j)
       {
-        d->tableWidget_CameraMatrix->setItem(i, j, new QTableWidgetItem(QString::number(camNode->GetIntrinsicMatrix()->GetElement(i, j))));
+        d->MatrixWidget_CameraMatrix->setValue(i, j, camNode->GetIntrinsicMatrix()->GetElement(i, j));
       }
     }
-    d->tableWidget_CameraMatrix->blockSignals(oldState);
+    d->MatrixWidget_CameraMatrix->blockSignals(oldState);
   }
 }
 
@@ -628,21 +623,18 @@ void qMRMLVideoCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified(vtkO
 
   vtkMRMLVideoCameraNode* camNode = vtkMRMLVideoCameraNode::SafeDownCast(caller);
 
-  if (camNode != nullptr && camNode->GetDistortionCoefficients() != nullptr)
+  if (camNode != nullptr)
   {
-    bool oldState = d->tableWidget_DistCoeffs->blockSignals(true);
+    bool oldState = d->MatrixWidget_DistCoeffs->blockSignals(true);
 
-    d->tableWidget_DistCoeffs->clear();
-    d->tableWidget_DistCoeffs->setRowCount(0);
-    d->tableWidget_DistCoeffs->setColumnCount(0);
-    d->tableWidget_DistCoeffs->insertRow(0);
+    d->MatrixWidget_DistCoeffs->setRowCount(1);
+    d->MatrixWidget_DistCoeffs->setColumnCount(camNode->GetNumberOfDistortionCoefficients());
 
-    for (int i = 0; i < camNode->GetDistortionCoefficients()->GetNumberOfValues(); ++i)
+    for (int i = 0; i < camNode->GetNumberOfDistortionCoefficients(); ++i)
     {
-      d->tableWidget_DistCoeffs->insertColumn(d->tableWidget_DistCoeffs->columnCount());
-      d->tableWidget_DistCoeffs->setItem(0, i, new QTableWidgetItem(QString::number(camNode->GetDistortionCoefficients()->GetValue(i))));
+      d->MatrixWidget_DistCoeffs->setValue(0, i, camNode->GetDistortionCoefficientValue(i));
     }
-    d->tableWidget_DistCoeffs->blockSignals(oldState);
+    d->MatrixWidget_DistCoeffs->blockSignals(oldState);
   }
 }
 
@@ -655,15 +647,15 @@ void qMRMLVideoCameraIntrinsicsWidget::OnNodeMarkerTransformModified(vtkObject* 
 
   if (camNode != nullptr && camNode->GetMarkerToImageSensorTransform() != nullptr)
   {
-    bool oldState = d->tableWidget_MarkerToImageSensor->blockSignals(true);
-    for (int i = 0; i < 4; ++i)
+    bool oldState = d->MatrixWidget_MarkerToImageSensor->blockSignals(true);
+    for (int i = 0; i < 3; ++i)
     {
-      for (int j = 0; j < 4; ++j)
+      for (int j = 0; j < 3; ++j)
       {
-        d->tableWidget_MarkerToImageSensor->setItem(i, j, new QTableWidgetItem(QString::number(camNode->GetMarkerToImageSensorTransform()->GetElement(i, j))));
+        d->MatrixWidget_MarkerToImageSensor->setValue(i, j, camNode->GetMarkerToImageSensorTransform()->GetElement(i, j));
       }
     }
-    d->tableWidget_MarkerToImageSensor->blockSignals(oldState);
+    d->MatrixWidget_MarkerToImageSensor->blockSignals(oldState);
   }
 }
 
@@ -674,14 +666,14 @@ void qMRMLVideoCameraIntrinsicsWidget::OnCameraPlaneOffsetModified(vtkObject* ca
 
   vtkMRMLVideoCameraNode* camNode = vtkMRMLVideoCameraNode::SafeDownCast(caller);
 
-  if (camNode != nullptr && camNode->GetCameraPlaneOffset() != nullptr)
+  if (camNode != nullptr)
   {
-    bool oldState = d->tableWidget_CameraPlaneOffset->blockSignals(true);
+    bool oldState = d->MatrixWidget_CameraPlaneOffset->blockSignals(true);
     for (int i = 0; i < 3; ++i)
     {
-      d->tableWidget_CameraPlaneOffset->setItem(0, i, new QTableWidgetItem(QString::number(camNode->GetCameraPlaneOffset()->GetValue(i))));
+      d->MatrixWidget_CameraPlaneOffset->setValue(0, i, camNode->GetCameraPlaneOffsetValue(i));
     }
-    d->tableWidget_CameraPlaneOffset->blockSignals(oldState);
+    d->MatrixWidget_CameraPlaneOffset->blockSignals(oldState);
   }
 }
 
@@ -700,6 +692,7 @@ void qMRMLVideoCameraIntrinsicsWidget::SetCurrentNode(vtkMRMLVideoCameraNode* ne
     this->IntrinsicObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::IntrinsicsModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeIntrinsicsModified);
     this->DistortionObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::DistortionCoefficientsModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeDistortionCoefficientsModified);
     this->MarkerTransformObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::MarkerToSensorTransformModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnNodeMarkerTransformModified);
+    this->CameraPlaneOffsetObserverTag = this->CurrentNode->AddObserver(vtkMRMLVideoCameraNode::CameraPlaneOffsetModifiedEvent, this, &qMRMLVideoCameraIntrinsicsWidget::OnCameraPlaneOffsetModified);
   }
 }
 

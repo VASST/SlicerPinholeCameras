@@ -153,13 +153,10 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   }
   cameraNode->SetAndObserveIntrinsicMatrix(mat);
 
+  for (int i = 0; i < distCoeffs.rows; ++i)
   {
-    vtkNew<vtkDoubleArray> array;
-    for (int i = 0; i < distCoeffs.rows; ++i)
-    {
-      array->InsertNextValue(distCoeffs.at<double>(i, 0));
-    }
-    cameraNode->SetAndObserveDistortionCoefficients(array);
+    cameraNode->SetNumberOfDistortionCoefficients(distCoeffs.rows);
+    cameraNode->SetDistortionCoefficientValue(i, cameraPlaneOffset.at<double>(i, 0));
   }
 
   vtkNew<vtkMatrix4x4> markerToImageSensor;
@@ -172,13 +169,9 @@ int vtkMRMLVideoCameraStorageNode::ReadDataInternal(vtkMRMLNode* refNode)
   }
   cameraNode->SetAndObserveMarkerToImageSensorTransform(markerToImageSensor);
 
+  for (int i = 0; i < cameraPlaneOffset.rows; ++i)
   {
-    vtkNew<vtkDoubleArray> array;
-    for (int i = 0; i < cameraPlaneOffset.rows; ++i)
-    {
-      array->InsertNextValue(cameraPlaneOffset.at<double>(i, 0));
-    }
-    cameraNode->SetAndObserveCameraPlaneOffset(array);
+    cameraNode->SetCameraPlaneOffsetValue(i, cameraPlaneOffset.at<double>(i, 0));
   }
 
   return 1;
@@ -222,17 +215,17 @@ int vtkMRMLVideoCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     fs << "IntrinsicMatrix" << intrinMat;
   }
 
-  if (videoCameraNode->GetDistortionCoefficients() == NULL)
+  if (!videoCameraNode->HasDistortionCoefficents())
   {
     vtkInfoMacro("Distortion coefficients have not been determined for this camera.");
     fs << "DistortionCoefficients" << cv::Mat::zeros(5, 1, CV_64F);
   }
   else
   {
-    cv::Mat distCoeffs(videoCameraNode->GetDistortionCoefficients()->GetSize(), 1, CV_64F);
-    for (int i = 0; i < videoCameraNode->GetDistortionCoefficients()->GetSize(); ++i)
+    cv::Mat distCoeffs(videoCameraNode->GetNumberOfDistortionCoefficients(), 1, CV_64F);
+    for (int i = 0; i < videoCameraNode->GetNumberOfDistortionCoefficients(); ++i)
     {
-      distCoeffs.at<double>(i, 0) = videoCameraNode->GetDistortionCoefficients()->GetValue(i);
+      distCoeffs.at<double>(i, 0) = videoCameraNode->GetDistortionCoefficientValue(i);
     }
     fs << "DistortionCoefficients" << distCoeffs;
   }
@@ -255,20 +248,12 @@ int vtkMRMLVideoCameraStorageNode::WriteDataInternal(vtkMRMLNode* refNode)
     fs << "MarkerToSensor" << mat;
   }
 
-  if (videoCameraNode->GetCameraPlaneOffset() == NULL)
+  cv::Mat planeOffsets(3, 1, CV_64F);
+  for (int i = 0; i < 3; ++i)
   {
-    vtkInfoMacro("Camera plane offsets have not been determined for this camera.");
-    fs << "CameraPlaneOffset" << cv::Mat::zeros(3, 1, CV_64F);
+    planeOffsets.at<double>(i, 0) = videoCameraNode->GetCameraPlaneOffsetValue(i);
   }
-  else
-  {
-    cv::Mat planeOffsets(3, 1, CV_64F);
-    for (int i = 0; i < 3; ++i)
-    {
-      planeOffsets.at<double>(i, 0) = videoCameraNode->GetCameraPlaneOffset()->GetValue(i);
-    }
-    fs << "CameraPlaneOffset" << planeOffsets;
-  }
+  fs << "CameraPlaneOffset" << planeOffsets;
 
   if (videoCameraNode->IsReprojectionErrorValid())
   {

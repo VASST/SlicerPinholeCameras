@@ -52,19 +52,19 @@ public:
   /// Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() override {return "VideoCamera";};
 
-  ///
-  /// Set intrinsic matrix
   vtkGetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   void SetAndObserveIntrinsicMatrix(vtkMatrix3x3* intrinsicMatrix);
 
-  vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
-  void SetAndObserveDistortionCoefficients(vtkDoubleArray* distCoeffs);
-
-  vtkGetObjectMacro(CameraPlaneOffset, vtkDoubleArray);
-  void SetAndObserveCameraPlaneOffset(vtkDoubleArray* planeOffset);
-
   vtkGetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
   void SetAndObserveMarkerToImageSensorTransform(vtkMatrix4x4* markerToImageSensorTransform);
+
+  bool HasDistortionCoefficents() const;
+  void SetNumberOfDistortionCoefficients(vtkIdType num);
+  vtkIdType GetNumberOfDistortionCoefficients() const;
+  void SetDistortionCoefficientValue(vtkIdType idx, double value);
+  double GetDistortionCoefficientValue(vtkIdType idx);
+  void SetCameraPlaneOffsetValue(vtkIdType idx, double value);
+  double GetCameraPlaneOffsetValue(vtkIdType idx);
 
   virtual vtkMRMLStorageNode* CreateDefaultStorageNode() override;
 
@@ -79,8 +79,10 @@ public:
 protected:
   vtkSetObjectMacro(IntrinsicMatrix, vtkMatrix3x3);
   vtkSetObjectMacro(DistortionCoefficients, vtkDoubleArray);
+  vtkGetObjectMacro(DistortionCoefficients, vtkDoubleArray);
   vtkSetObjectMacro(MarkerToImageSensorTransform, vtkMatrix4x4);
   vtkSetObjectMacro(CameraPlaneOffset, vtkDoubleArray);
+  vtkGetObjectMacro(CameraPlaneOffset, vtkDoubleArray);
 
   unsigned long IntrinsicObserverObserverTag;
   unsigned long DistortionCoefficientsObserverTag;
@@ -88,8 +90,6 @@ protected:
   unsigned long MarkerTransformObserverTag;
 
   void OnIntrinsicsModified(vtkObject* caller, unsigned long event, void* data);
-  void OnDistortionCoefficientsModified(vtkObject* caller, unsigned long event, void* data);
-  void OnCameraPlaneOffsetModified(vtkObject* caller, unsigned long event, void* data);
   void OnMarkerTransformModified(vtkObject* caller, unsigned long event, void* data);
 
 protected:
@@ -102,6 +102,7 @@ protected:
   vtkDoubleArray*     DistortionCoefficients;
   double              ReprojectionError;
   double              RegistrationError;
+  bool                DistortionCoefficientsExist;
   vtkDoubleArray*     CameraPlaneOffset;
   vtkMatrix4x4*       MarkerToImageSensorTransform;
 };
