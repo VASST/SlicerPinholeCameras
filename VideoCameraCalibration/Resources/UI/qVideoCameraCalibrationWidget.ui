@@ -482,104 +482,6 @@
       <string>Intrinsics Calibration</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="0" colspan="6">
-       <widget class="QWidget" name="widget_ContainerCheckerboard" native="true">
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="label_Rows">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Rows:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_Rows">
-           <property name="value">
-            <number>6</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_Columns">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Columns:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_Columns">
-           <property name="value">
-            <number>9</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_SquareSize">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Square Size:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_SquareSize">
-           <property name="suffix">
-            <string>mm</string>
-           </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
-           </property>
-           <property name="value">
-            <double>25.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="label_Result">
-        <property name="text">
-         <string>Result:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_IntrinsicMethod">
-        <property name="text">
-         <string>Method:</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1" colspan="5">
        <widget class="QWidget" name="widget_IntrinsicMethodContainer" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -641,14 +543,39 @@
         </layout>
        </widget>
       </item>
-      <item row="8" column="1" colspan="3">
-       <widget class="QLabel" name="label_ResultValue">
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_Result">
         <property name="text">
-         <string/>
+         <string>Result:</string>
         </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="6">
+       <widget class="QWidget" name="widget_arucoDictContainer" native="true">
+        <layout class="QFormLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_arucoDict">
+           <property name="text">
+            <string>Dictionary:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="comboBox_arucoDict"/>
+         </item>
+        </layout>
        </widget>
       </item>
       <item row="2" column="0" colspan="6">
@@ -848,9 +775,9 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="0" colspan="6">
-       <widget class="QWidget" name="widget_arucoDictContainer" native="true">
-        <layout class="QFormLayout">
+      <item row="1" column="0" colspan="6">
+       <widget class="QWidget" name="widget_ContainerCheckerboard" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -863,15 +790,71 @@
          <property name="bottomMargin">
           <number>0</number>
          </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_arucoDict">
+         <item>
+          <widget class="QLabel" name="label_Rows">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>Dictionary:</string>
+            <string>Rows:</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="comboBox_arucoDict"/>
+         <item>
+          <widget class="QSpinBox" name="spinBox_Rows">
+           <property name="value">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_Columns">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Columns:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_Columns">
+           <property name="value">
+            <number>9</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_SquareSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Square Size:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_SquareSize">
+           <property name="suffix">
+            <string>mm</string>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="value">
+            <double>25.000000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -918,6 +901,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="pushButton_Calibrate">
+           <property name="text">
+            <string>Calibrate</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="pushButton_Reset">
            <property name="text">
             <string>Reset</string>
@@ -940,83 +930,11 @@
         </layout>
        </widget>
       </item>
-      <item row="4" column="0" colspan="6">
-       <widget class="QWidget" name="widget_arucoArgs" native="true">
-        <property name="enabled">
-         <bool>false</bool>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_IntrinsicMethod">
+        <property name="text">
+         <string>Method:</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_5">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_markerSeparation">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>3</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Marker Separation (cm):</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_markerSeparation">
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-           <property name="singleStep">
-            <double>0.010000000000000</double>
-           </property>
-           <property name="value">
-            <double>0.200000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_arucoMarkerSize">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>3</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Marker Size (cm):</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_markerSize">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-           <property name="singleStep">
-            <double>0.010000000000000</double>
-           </property>
-           <property name="value">
-            <double>1.600000000000000</double>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
       <item row="5" column="0" colspan="6">
@@ -1048,11 +966,14 @@
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
+           <property name="suffix">
+            <string>mm</string>
+           </property>
            <property name="singleStep">
             <double>0.010000000000000</double>
            </property>
            <property name="value">
-            <double>1.500000000000000</double>
+            <double>15.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -1065,7 +986,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Square Size (cm):</string>
+            <string>Square Size:</string>
            </property>
           </widget>
          </item>
@@ -1078,7 +999,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Marker Size (cm):</string>
+            <string>Marker Size:</string>
            </property>
           </widget>
          </item>
@@ -1093,15 +1014,130 @@
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
+           <property name="suffix">
+            <string>mm</string>
+           </property>
            <property name="singleStep">
             <double>0.010000000000000</double>
            </property>
            <property name="value">
-            <double>1.500000000000000</double>
+            <double>13.000000000000000</double>
            </property>
           </widget>
          </item>
         </layout>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="6">
+       <widget class="QWidget" name="widget_arucoArgs" native="true">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_markerSeparation">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Marker Separation:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_markerSeparation">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="suffix">
+            <string>mm</string>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>2.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_arucoMarkerSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Marker Size:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_markerSize">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="suffix">
+            <string>mm</string>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>16.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="label_PointsCollectedFixed">
+        <property name="text">
+         <string>Points collected:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1" colspan="5">
+       <widget class="QLabel" name="label_PointsCollected">
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1" colspan="5">
+       <widget class="QLabel" name="label_ResultValue">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
      </layout>
@@ -1147,12 +1183,12 @@
  <resources/>
  <connections/>
  <buttongroups>
+  <buttongroup name="buttonGroup_CircleGridMethod"/>
   <buttongroup name="buttonGroup_IntrinsicMethod">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_CircleGridMethod"/>
   <buttongroup name="buttonGroup_ProcessMode"/>
  </buttongroups>
 </ui>

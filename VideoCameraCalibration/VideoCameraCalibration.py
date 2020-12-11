@@ -166,15 +166,19 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.fastCheckButton = None
     self.symmetricButton = None
     self.asymmetricButton = None
-    self.squareSizeEdit = None
+    self.squareSizeDoubleSpinBox = None
     self.clusteringButton = None
-    self.labelResult = None
     self.invertImageButton = None
     self.arucoDictComboBox = None
     self.arucoDictContainer = None
+    self.calibrateButton = None
 
     self.columnsSpinBox = None
     self.rowsSpinBox = None
+
+    # Results
+    self.labelResult = None
+    self.labelPointsCollected = None
 
     self.videoCameraOriginInReference = None
     self.stylusTipToVideoCamera = vtk.vtkMatrix4x4()
@@ -238,7 +242,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.intrinsicCharucoButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_IntrinsicCharuco")
       self.columnsSpinBox = VideoCameraCalibrationWidget.get(self.widget, "spinBox_Columns")
       self.rowsSpinBox = VideoCameraCalibrationWidget.get(self.widget, "spinBox_Rows")
-      self.squareSizeEdit = VideoCameraCalibrationWidget.get(self.widget, "doubleSpinBox_SquareSize")
+      self.squareSizeDoubleSpinBox = VideoCameraCalibrationWidget.get(self.widget, "doubleSpinBox_SquareSize")
       self.adaptiveThresholdButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_AdaptiveThreshold")
       self.normalizeImageButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_NormalizeImage")
       self.filterQuadsButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_FilterQuads")
@@ -246,7 +250,6 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.symmetricButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_SymmetricGrid")
       self.asymmetricButton = VideoCameraCalibrationWidget.get(self.widget, "radioButton_AsymmetricGrid")
       self.clusteringButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_Clustering")
-      self.labelResult = VideoCameraCalibrationWidget.get(self.widget, "label_ResultValue")
       self.invertImageButton = VideoCameraCalibrationWidget.get(self.widget, "checkBox_ImageInvert")
       self.arucoDictComboBox = VideoCameraCalibrationWidget.get(self.widget, "comboBox_arucoDict")
       self.arucoDictContainer = VideoCameraCalibrationWidget.get(self.widget, "widget_arucoDictContainer")
@@ -256,6 +259,11 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.charucoContainer = VideoCameraCalibrationWidget.get(self.widget, "widget_charucoArgs")
       self.charucoSquareSizeSpinBox = VideoCameraCalibrationWidget.get(self.widget, "doubleSpinBox_charucoSquareSize")
       self.charucoMarkerSizeSpinBox = VideoCameraCalibrationWidget.get(self.widget, "doubleSpinBox_charucoMarkerSize")
+      self.calibrateButton = VideoCameraCalibrationWidget.get(self.widget, "pushButton_Calibrate")
+
+      # Results
+      self.labelResult = VideoCameraCalibrationWidget.get(self.widget, "label_ResultValue")
+      self.labelPointsCollected = VideoCameraCalibrationWidget.get(self.widget, "label_PointsCollected")
 
       # Disable capture as image processing isn't active yet
       self.trackerContainer.setEnabled(False)
@@ -285,6 +293,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.charucoMarkerSizeSpinBox.connect('valueChanged(double)', self.onPatternChanged)
       self.captureCountSpinBox.connect('valueChanged(int)', self.onCaptureCountChanged)
       self.arucoDictComboBox.connect('currentIndexChanged(int)', self.onArucoDictChanged)
+      self.calibrateButton.connect('clicked(bool)', self.onCalibrateButtonClicked)
 
       self.manualButton.connect('clicked(bool)', self.onManualButton)
       self.semiAutoButton.connect('clicked(bool)', self.onSemiAutoButton)
@@ -337,6 +346,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.charucoMarkerSizeSpinBox.disconnect('valueChanged(double)', self.onPatternChanged)
     self.captureCountSpinBox.disconnect('valueChanged(int)', self.onCaptureCountChanged)
     self.arucoDictComboBox.disconnect('currentIndexChanged(int)', self.onArucoDictChanged)
+    self.calibrateButton.disconnect('clicked(bool)', self.onCalibrateButtonClicked)
 
     self.imageSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.onImageSelected)
     self.stylusTipTransformSelector.disconnect("currentNodeChanged(vtkMRMLNode*)", self.updateUI)
@@ -361,7 +371,9 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     self.logic.resetIntrinsic()
     self.labelResult.text = "Reset."
     self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(vtk.vtkMatrix3x3().Identity())
-    self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(vtk.vtkDoubleArray())
+    self.videoCameraIntrinWidget.GetCurrentNode().SetNumberOfDistortionCoefficients(5)
+    for i in range(0,5):
+      self.videoCameraIntrinWidget.GetCurrentNode().SetDistortionCoefficientValue(i, 0.0)
 
   def onResetPtL(self):
     self.rayList = []
@@ -442,45 +454,42 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       ret = self.logic.findAruco(im, self.invertImage)
     elif self.intrinsicCharucoButton.checked:
       ret = self.logic.findCharuco(im, self.invertImage)
+      _count = 0
+      for i in range(0, len(self.logic.charucoCorners)):
+        _count = _count + len(self.logic.charucoCorners[i])
+      self.labelPointsCollected.text = _count
     else:
       pass
 
     if ret:
-      string = "Success (" + str(self.logic.countIntrinsics()) + ")"
-      done, error, mtx, dist = self.logic.calibrateVideoCamera()
-      if done:
-        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
-        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
-        self.videoCameraIntrinWidget.GetCurrentNode().SetReprojectionError(error)
-        string += ". Calibration reprojection error: " + str(error)
-      self.labelResult.text = string
+      self.labelResult.text = "Success (" + str(self.logic.countIntrinsics()) + ")"
     else:
       self.labelResult.text = "Failure."
 
   def onIntrinsicModeChanged(self):
     if self.intrinsicCheckerboardButton.checked:
       self.checkerboardContainer.enabled = True
-      self.squareSizeEdit.enabled = True
+      self.squareSizeDoubleSpinBox.enabled = True
       self.flagsContainer.enabled = True
       self.checkerboardFlags.enabled = True
       self.circleGridFlags.enabled = False
       self.arucoDictContainer.enabled = False
       self.arucoContainer.enabled = False
       self.charucoContainer.enabled = False
-      self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, 'checkerboard', self.squareSizeEdit.value, 0)
+      self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, 'checkerboard', self.squareSizeDoubleSpinBox.value, 0)
     elif self.intrinsicCircleGridButton.checked:
       self.checkerboardContainer.enabled = True
-      self.squareSizeEdit.enabled = False
+      self.squareSizeDoubleSpinBox.enabled = False
       self.flagsContainer.enabled = True
       self.checkerboardFlags.enabled = False
       self.circleGridFlags.enabled = True
       self.arucoDictContainer.enabled = False
       self.arucoContainer.enabled = False
       self.charucoContainer.enabled = False
-      self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, 'circlegrid', self.squareSizeEdit.value, 0)
+      self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, 'circlegrid', self.squareSizeDoubleSpinBox.value, 0)
     elif self.intrinsicArucoButton.checked:
       self.checkerboardContainer.enabled = True
-      self.squareSizeEdit.enabled = False
+      self.squareSizeDoubleSpinBox.enabled = False
       self.flagsContainer.enabled = False
       self.checkerboardFlags.enabled = False
       self.circleGridFlags.enabled = False
@@ -490,7 +499,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.logic.calculateObjectPattern(self.rowsSpinBox.value, self.columnsSpinBox.value, 'aruco', self.arucoMarkerSizeSpinBox.value, self.arucoMarkerSeparationSpinBox.value)
     elif self.intrinsicCharucoButton.checked:
       self.checkerboardContainer.enabled = True
-      self.squareSizeEdit.enabled = False
+      self.squareSizeDoubleSpinBox.enabled = False
       self.flagsContainer.enabled = False
       self.checkerboardFlags.enabled = False
       self.circleGridFlags.enabled = False
@@ -511,6 +520,16 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.stylusTipTransformObserverTag = self.stylusTipTransformNode.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onStylusTipTransformModified)
 
     self.updateUI()
+
+  def onCalibrateButtonClicked(self):
+    done, error, mtx, dist = self.logic.calibrateVideoCamera()
+    if done:
+      self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
+      self.videoCameraIntrinWidget.GetCurrentNode().SetNumberOfDistortionCoefficients(dist.GetNumberOfValues())
+      for i in range(0, dist.GetNumberOfValues()):
+        self.videoCameraIntrinWidget.GetCurrentNode().SetDistortionCoefficientValue(i, dist.GetValue(i))
+      self.videoCameraIntrinWidget.GetCurrentNode().SetReprojectionError(error)
+      self.labelResult.text = "Calibration reprojection error: " + str(error) + "."
 
   @vtk.calldata_type(vtk.VTK_OBJECT)
   def onStylusTipTransformModified(self, caller, event):
@@ -747,8 +766,10 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
     self.objPattern *= param1
     self.createBoard(type, param1, param2)
 
-  def createBoard(self, type, param1, param2):
+  def createBoard(self, type, param1_mm, param2_mm):
     if self.arucoDict is not None:
+      param1 = param1_mm * 0.001;
+      param2 = param2_mm * 0.001;
       if type.find('charuco') != -1:
         # square size, marker size
         try:
@@ -818,7 +839,9 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       done, result, error, mtx, dist = self.logic.calibrateVideoCamera()
       if done:
         self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
-        self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveDistortionCoefficients(dist)
+        self.videoCameraIntrinWidget.GetCurrentNode().SetNumberOfDistortionCoefficients(dist.GetNumberOfValues())
+        for i in range(0, dist.GetNumberOfValues()):
+          self.videoCameraIntrinWidget.GetCurrentNode().SetDistortionCoefficientValue(i, dist.GetValue(i))
         string += ". Calibration reprojection error: " + str(error)
       self.labelResult.text = string
     else:
@@ -860,13 +883,13 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     except:
       gray = image
-    self.imageSize = gray.shape[::-1]
+    self.imageSize = gray.shape
 
     if invert:
       gray = cv2.bitwise_not(gray)
 
     # SUB PIXEL CORNER DETECTION CRITERION
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(gray, self.arucoDict)
 
     res = None
@@ -874,7 +897,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
       # SUB PIXEL DETECTION
       for corner in corners:
         cv2.cornerSubPix(gray, corner,
-                         winSize=(3, 3),
+                         winSize=(20, 20),
                          zeroZone=(-1, -1),
                          criteria=criteria)
       res = cv2.aruco.interpolateCornersCharuco(corners, ids, gray, self.arucoBoard)
@@ -914,12 +937,12 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
       return True, ret, mat, pts
     if len(self.charucoCorners) > 0:
-      cameraMatrixInit = np.array([[1000., 0., self.imageSize[0] / 2.],
-                                   [0., 1000., self.imageSize[1] / 2.],
+      cameraMatrixInit = np.array([[2000., 0., self.imageSize[0] / 2.],
+                                   [0., 2000., self.imageSize[1] / 2.],
                                    [0., 0., 1.]])
 
       distCoeffsInit = np.zeros((5, 1))
-      flags = (cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_FIX_ASPECT_RATIO)
+      flags = (cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL)
       (ret, camera_matrix, distortion_coefficients0,
        rotation_vectors, translation_vectors,
        stdDeviationsIntrinsics, stdDeviationsExtrinsics,
