@@ -333,6 +333,9 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       self.onProcessingModeChanged()
 
   def cleanup(self):
+    self.onReset()
+    self.onResetPtL()
+
     self.capIntrinsicButton.disconnect('clicked(bool)', self.onIntrinsicCapture)
     self.intrinsicCheckerboardButton.disconnect('clicked(bool)', self.onIntrinsicModeChanged)
     self.intrinsicCircleGridButton.disconnect('clicked(bool)', self.onIntrinsicModeChanged)
@@ -444,7 +447,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     sc = vtk_im.GetPointData().GetScalars()
     im = vtk.util.numpy_support.vtk_to_numpy(sc)
     im = im.reshape(cols, rows, components)
-    im = np.flip(im, (0,1))
+    #im = np.flip(im, (0,1))
 
     if self.intrinsicCheckerboardButton.checked:
       ret = self.logic.findCheckerboard(im, self.invertImage)
@@ -525,6 +528,7 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     done, error, mtx, dist = self.logic.calibrateVideoCamera()
     if done:
       self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
+      print(mtx)
       self.videoCameraIntrinWidget.GetCurrentNode().SetNumberOfDistortionCoefficients(dist.GetNumberOfValues())
       for i in range(0, dist.GetNumberOfValues()):
         self.videoCameraIntrinWidget.GetCurrentNode().SetDistortionCoefficientValue(i, dist.GetValue(i))
@@ -869,8 +873,8 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
         self.arucoCorners = corners
         self.arucoIDs = ids
       else:
-        self.arucoCorners = np.vstack((self.arucoCorners, corners))
-        self.arucoIDs = np.vstack((self.arucoIDs, ids))
+        self.arucoCorners.append(corners[1])
+        self.arucoIDs.append(corners[2])
       self.arucoCount.append(len(ids))
 
     return len(corners)>0
@@ -924,8 +928,15 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
                                    [0., 0., 1.]])
 
       distCoeffsInit = np.zeros((5, 1))
-      counter = np.array(self.arucoCount)
-      ret, mtx, dist, rvecs, tvecs = aruco.calibrateCameraAruco(self.arucoCorners, self.arucoIDs, counter, self.arucoBoard, self.imageSize, cameraMatrixInit, distCoeffsInit)
+      flags = (cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL)
+      ret, mtx, dist, rvecs, tvecs = aruco.calibrateCameraCharucoExtended(charucoCorners=self.arucoCorners,
+            charucoIds=self.arucoIDs,
+            board=self.arucoBoard,
+            imageSize=self.imageSize,
+            cameraMatrix=cameraMatrixInit,
+            distCoeffs=distCoeffsInit,
+            flags=flags,
+            criteria=(cv2.TERM_CRITERIA_EPS & cv2.TERM_CRITERIA_COUNT, 10000, 1e-9))
 
       mat = vtk.vtkMatrix3x3()
       for i in range(0, 3):
@@ -937,6 +948,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
       return True, ret, mat, pts
     if len(self.charucoCorners) > 0:
+      slicer.vcrlog = self
       cameraMatrixInit = np.array([[2000., 0., self.imageSize[0] / 2.],
                                    [0., 2000., self.imageSize[1] / 2.],
                                    [0., 0., 1.]])
@@ -956,6 +968,7 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
         flags=flags,
         criteria=(cv2.TERM_CRITERIA_EPS & cv2.TERM_CRITERIA_COUNT, 10000, 1e-9))
 
+      print(camera_matrix)
       mat = vtk.vtkMatrix3x3()
       for i in range(0, 3):
         for j in range(0, 3):
