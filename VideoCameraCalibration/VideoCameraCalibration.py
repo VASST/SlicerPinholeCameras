@@ -447,14 +447,25 @@ class VideoCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     sc = vtk_im.GetPointData().GetScalars()
     im = vtk.util.numpy_support.vtk_to_numpy(sc)
     im = im.reshape(cols, rows, components)
-    #im = np.flip(im, (0,1))
 
     if self.intrinsicCheckerboardButton.checked:
       ret = self.logic.findCheckerboard(im, self.invertImage)
+      _count = 0
+      for i in range(0, len(self.logic.imagePoints)):
+        _count = _count + len(self.logic.imagePoints[i])
+      self.labelPointsCollected.text = _count
     elif self.intrinsicCircleGridButton.checked:
       ret = self.logic.findCircleGrid(im, self.invertImage)
+      _count = 0
+      for i in range(0, len(self.logic.imagePoints)):
+        _count = _count + len(self.logic.imagePoints[i])
+      self.labelPointsCollected.text = _count
     elif self.intrinsicArucoButton.checked:
       ret = self.logic.findAruco(im, self.invertImage)
+      _count = 0
+      for i in range(0, len(self.logic.arucoCorners)):
+        _count = _count + len(self.logic.arucoCorners[i])
+      self.labelPointsCollected.text = _count
     elif self.intrinsicCharucoButton.checked:
       ret = self.logic.findCharuco(im, self.invertImage)
       _count = 0
@@ -923,8 +934,8 @@ class VideoCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
       return True, ret, mat, pts
     if len(self.arucoCorners) > 0:
-      cameraMatrixInit = np.array([[1000., 0., self.imageSize[0] / 2.],
-                                   [0., 1000., self.imageSize[1] / 2.],
+      cameraMatrixInit = np.array([[2000., 0., self.imageSize[0] / 2.],
+                                   [0., 2000., self.imageSize[1] / 2.],
                                    [0., 0., 1.]])
 
       distCoeffsInit = np.zeros((5, 1))
