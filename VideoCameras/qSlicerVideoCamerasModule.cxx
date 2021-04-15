@@ -98,7 +98,7 @@ QIcon qSlicerVideoCamerasModule::icon() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerVideoCamerasModule::categories() const
 {
-  return QStringList() << "VideoCameras";
+  return QStringList() << "Computer Vision";
 }
 
 //-----------------------------------------------------------------------------

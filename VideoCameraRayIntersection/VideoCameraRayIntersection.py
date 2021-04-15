@@ -11,7 +11,7 @@ class VideoCameraRayIntersection(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "VideoCamera Ray Intersection"
-    self.parent.categories = ["VideoCameras"]
+    self.parent.categories = ["Computer Vision"]
     self.parent.dependencies = ["VideoCameras", "LinesIntersection", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """This module calculates the offset between ray intersections on an object from multiple videoCamera angles. """ + self.getDefaultModuleDocumentationLink()

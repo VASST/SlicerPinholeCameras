@@ -11,7 +11,7 @@ class VideoCameraCalibration(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "VideoCamera Calibration"
-    self.parent.categories = ["VideoCameras"]
+    self.parent.categories = ["Computer Vision"]
     self.parent.dependencies = ["VideoCameras", "PointToLineRegistration", "Annotations"]
     self.parent.contributors = ["Adam Rankin (Robarts Research Institute)"]
     self.parent.helpText = """This module utilizes OpenCV camera calibration functions to perform intrinsic calibration and calibration to an external tracker using a tracked, calibrated stylus. """ + self.getDefaultModuleDocumentationLink()
