@@ -232,7 +232,7 @@ class PinholeCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
     if PinholeCameraRayIntersectionWidget.areSameVTK3x3(self.videoCameraNode.GetIntrinsicMatrix(), self.identity3x3):
       string += "No videoCamera intrinsics! "
       self.validPinholeCamera = False
-    if PinholeCameraRayIntersectionWidget.emptyOrZeros(self.videoCameraNode.GetDistortionCoefficients()):
+    if self.videoCameraNode.GetNumberOfDistortionCoefficients() == 0:
       string += "No distortion coefficients! "
       self.validPinholeCamera = False
     if PinholeCameraRayIntersectionWidget.areSameVTK4x4(self.videoCameraNode.GetMarkerToImageSensorTransform(), self.identity4x4):
@@ -337,10 +337,10 @@ class PinholeCameraRayIntersectionWidget(ScriptedLoadableModuleWidget):
       # Get videoCamera parameters
       mtx = PinholeCameraRayIntersectionWidget.vtk3x3ToNumpy(self.videoCameraSelector.currentNode().GetIntrinsicMatrix())
 
-      if self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues() != 0:
-        dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-        for i in range(0, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-          dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      if self.videoCameraSelector.currentNode().GetNumberOfDistortionCoefficients() != 0:
+        dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetNumberOfDistortionCoefficients()), dtype=np.float64))
+        for i in range(0, self.videoCameraSelector.currentNode().GetNumberOfDistortionCoefficients()):
+          dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficientValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 

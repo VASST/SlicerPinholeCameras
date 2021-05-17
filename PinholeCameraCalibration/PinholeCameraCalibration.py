@@ -539,7 +539,6 @@ class PinholeCameraCalibrationWidget(ScriptedLoadableModuleWidget):
     done, error, mtx, dist = self.logic.calibratePinholeCamera()
     if done:
       self.videoCameraIntrinWidget.GetCurrentNode().SetAndObserveIntrinsicMatrix(mtx)
-      print(mtx)
       self.videoCameraIntrinWidget.GetCurrentNode().SetNumberOfDistortionCoefficients(dist.GetNumberOfValues())
       for i in range(0, dist.GetNumberOfValues()):
         self.videoCameraIntrinWidget.GetCurrentNode().SetDistortionCoefficientValue(i, dist.GetValue(i))
@@ -649,10 +648,10 @@ class PinholeCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # Get PinholeCamera parameters
       mtx = PinholeCameraCalibrationWidget.vtk3x3ToNumpy(self.videoCameraSelector.currentNode().GetIntrinsicMatrix())
 
-      if self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues() != 0:
-        dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()), dtype=np.float64))
-        for i in range(0, self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetNumberOfValues()):
-          dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficients().GetValue(i)
+      if self.videoCameraSelector.currentNode().GetNumberOfDistortionCoefficients() != 0:
+        dist = np.asarray(np.zeros((1, self.videoCameraSelector.currentNode().GetNumberOfDistortionCoefficients()), dtype=np.float64))
+        for i in range(0, self.videoCameraSelector.currentNode().GetNumberOfDistortionCoefficients()):
+          dist[0, i] = self.videoCameraSelector.currentNode().GetDistortionCoefficientValue(i)
       else:
         dist = np.asarray([], dtype=np.float64)
 
@@ -661,7 +660,7 @@ class PinholeCameraCalibrationWidget(ScriptedLoadableModuleWidget):
       # Origin - defined in camera, typically 0,0,0
       origin_sen = np.asarray(np.zeros((3, 1), dtype=np.float64))
       for i in range(0, 3):
-        origin_sen[i, 0] = self.videoCameraSelector.currentNode().GetCameraPlaneOffset().GetValue(i)
+        origin_sen[i, 0] = self.videoCameraSelector.currentNode().GetCameraPlaneOffsetValue(i)
 
       # Calculate the direction vector for the given pixel (after undistortion)
       undistPoint = cv2.undistortPoints(point, mtx, dist, P=mtx)
@@ -959,7 +958,6 @@ class PinholeCameraCalibrationLogic(ScriptedLoadableModuleLogic):
 
       return True, ret, mat, pts
     if len(self.charucoCorners) > 0:
-      slicer.vcrlog = self
       cameraMatrixInit = np.array([[2000., 0., self.imageSize[0] / 2.],
                                    [0., 2000., self.imageSize[1] / 2.],
                                    [0., 0., 1.]])
@@ -979,7 +977,6 @@ class PinholeCameraCalibrationLogic(ScriptedLoadableModuleLogic):
         flags=flags,
         criteria=(cv2.TERM_CRITERIA_EPS & cv2.TERM_CRITERIA_COUNT, 10000, 1e-9))
 
-      print(camera_matrix)
       mat = vtk.vtkMatrix3x3()
       for i in range(0, 3):
         for j in range(0, 3):
