@@ -1,7 +1,7 @@
 
 #-----------------------------------------------------------------------------
 set(MODULE_NAME PinholeCameras)
-set(MODULE_TITLE "Video Cameras")
+set(MODULE_TITLE "Pinhole Cameras")
 
 string(TOUPPER ${MODULE_NAME} MODULE_NAME_UPPER)
 
