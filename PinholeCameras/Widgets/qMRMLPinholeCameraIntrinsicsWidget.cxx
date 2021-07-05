@@ -442,6 +442,8 @@ void qMRMLPinholeCameraIntrinsicsWidget::onMarkerTransformMatrixChanged()
 
   this->CurrentNode->RemoveObserver(this->MarkerTransformObserverTag);
   QVector<double> vals = d->MatrixWidget_MarkerToImageSensor->values();
+  qWarning() << d->MatrixWidget_MarkerToImageSensor->rowCount();
+  qWarning() << d->MatrixWidget_MarkerToImageSensor->columnCount();
   for (int i = 0; i < d->MatrixWidget_MarkerToImageSensor->rowCount(); i++)
   {
     for (int j = 0; j < d->MatrixWidget_MarkerToImageSensor->columnCount(); j++)
@@ -648,9 +650,9 @@ void qMRMLPinholeCameraIntrinsicsWidget::OnNodeMarkerTransformModified(vtkObject
   if (camNode != nullptr && camNode->GetMarkerToImageSensorTransform() != nullptr)
   {
     bool oldState = d->MatrixWidget_MarkerToImageSensor->blockSignals(true);
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-      for (int j = 0; j < 3; ++j)
+      for (int j = 0; j < 4; ++j)
       {
         d->MatrixWidget_MarkerToImageSensor->setValue(i, j, camNode->GetMarkerToImageSensorTransform()->GetElement(i, j));
       }
